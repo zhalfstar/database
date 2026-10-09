@@ -643,7 +643,7 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
 .last-rec:active{background:#eef4ff}
 .last-rec-body{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;line-height:1.6}
 .last-rec-body b{font-weight:600}
-.last-rec-body .last-rec-val{color:#e5484d;font-style:normal;font-weight:600}
+.last-rec-body .last-rec-val{color:var(--danger-hi);font-style:normal;font-weight:600}
 .last-rec-pop{position:fixed;z-index:2000;width:min(330px,88vw);max-height:46vh;overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 32px rgba(15,23,42,.22);font-size:13px;user-select:none;-webkit-user-select:none}
 .last-rec-pop-title{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background:var(--hl);border-bottom:1px solid var(--line2);font-size:12.5px;font-weight:600;color:var(--muted);cursor:move;touch-action:none;user-select:none;z-index:1}
 .last-rec-pop-title b{color:var(--text)}
@@ -4838,43 +4838,27 @@ async function downloadTemplate(){
   try{
     toast('正在准备文件…');
     const blob = new Blob([await _buildHtml(false)], {type:'text/html;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = '轻量数据库-模板.html';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 1000);
-    toast('模板已下载');
+    exportFile(blob, '轻量数据库-模板.html', {okMsg:'模板已导出'});
   }catch(e){ toast('下载失败：'+e.message); }
 }
 async function shareTemplate(){
   try{
     const blob = new Blob([await _buildHtml(false)], {type:'text/html;charset=utf-8'});
-    const file = new File([blob], '轻量数据库-模板.html', {type:'text/html'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      navigator.share({ files:[file], title:'轻量数据库（模板）', text:'轻量数据库模板，用浏览器打开即可使用' }).catch(()=>{});
-    } else { toast('请用下载模板后通过微信/QQ发送'); }
-  }catch(e){}
+    shareOrDownload(blob, '轻量数据库-模板.html', '轻量数据库（模板）');
+  }catch(e){ toast('分享失败：'+e.message); }
 }
 async function downloadSelf(){
   try{
     toast('正在准备文件…');
     const blob = new Blob([await _buildHtml(true)], {type:'text/html;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = '轻量数据库.html';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 1000);
-    toast('已下载当前文件');
+    exportFile(blob, '轻量数据库.html', {okMsg:'已导出当前文件'});
   }catch(e){ toast('下载失败：'+e.message); }
 }
 async function nativeShare(){
   try{
     const blob = new Blob([await _buildHtml(true)], {type:'text/html;charset=utf-8'});
-    const file = new File([blob], '轻量数据库.html', {type:'text/html'});
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      navigator.share({ files:[file], title:'轻量数据库', text:'本地轻量数据库应用，用浏览器打开即可使用' }).catch(()=>{});
-    } else { toast('请用下载后通过微信/QQ发送'); }
-  }catch(e){}
+    shareOrDownload(blob, '轻量数据库.html', '轻量数据库');
+  }catch(e){ toast('分享失败：'+e.message); }
 }
 /* ===== 条件格式：按规则自动给整行上色（Excel 式） =====
    规则自上而下，**第一条命中即生效**；用户手动设的行样式优先级更高（手动覆盖规则）。 */
