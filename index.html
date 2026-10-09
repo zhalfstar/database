@@ -1640,21 +1640,35 @@ try{
    安全性：#app 内只有侧边栏和主区；弹窗（#modal-root）、浮层菜单、toast 都是
    body 的直接子元素，在 #app 之外，不受这个 transform 影响（它们各自有补偿）。
    transform 不改布局，只改绘制，不会引起回流。 */
+/* 键盘是否弹着：iOS 弹键盘会把「视觉视口」高度压掉一大截（地址栏变化只有几十像素）。
+   用它把"键盘顶走文档"和"手指正常滚动页面"两种情况区分开。 */
+function keyboardOpen(){
+  const vv = window.visualViewport;
+  if(!vv) return false;
+  const h = vv.height || window.innerHeight;
+  return h < window.innerHeight - 80;
+}
 function syncAppShift(){
   const app = document.getElementById('app');
   const vv = window.visualViewport;
   const off = (vv && vv.offsetTop) || 0;
+  // 只有「键盘把视觉视口顶起来」时才做补偿。
+  // 关键：**手指正常滚动页面时 visualViewport 的 scroll / resize 也会疯狂触发**
+  //（iOS 快速上滑时地址栏收起，尤其明显），那时若调 resetDocScroll() 就会把刚滚上去的
+  //  内容顶回顶部 —— 表现就是"快速用力上滑被顶下来，慢慢滑没事"✗。
+  // 所以这里必须用「键盘是否弹着 / 守卫窗口是否开着」来收口，不能无条件补偿。
+  const kb = docGuardActive() || keyboardOpen();
   // ① 位移补偿：iOS 键盘有时会把「视觉视口」整体上移，主体跟着被顶走 → 按 offsetTop 顶回来
   if(app){
-    const t = off > 0 ? ('translateY(' + off + 'px)') : '';
+    const t = (kb && off > 0) ? ('translateY(' + off + 'px)') : '';
     if(app.style.transform !== t) app.style.transform = t;
   }
   // ② 文档滚动补偿（这才是"键盘弹出瞬间表头就没了"的主因）：
   //    iOS 在聚焦输入框时会把**整个文档**滚上去把输入框露出来 —— 即使 body 设了
   //    overflow:hidden 也照滚不误 ✗。而顶栏是 position:sticky、会钉在视口顶部，
   //    于是表格内容被顶上去、表头钻进顶栏（搜索框那一层）下面。
-  //    这里把文档滚回顶部，内容就回到原位。
-  resetDocScroll();
+  //    这里把文档滚回顶部，内容就回到原位。只在键盘相关时刻做。
+  if(kb) resetDocScroll();
 }
 function resetDocScroll(){
   // 只在手机端做：桌面端窗口很矮时文档本来就该能滚，别去动它
