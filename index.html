@@ -8883,7 +8883,8 @@ function tableExportPayload(t){
     .filter(g=>g.rows.length);
   return { v:1, xgroups,
     tables:[{ id:t.id, name:t.name, fields:t.fields, rows:t.rows, updatedAt:t.updatedAt,
-              bookId:t.bookId||'', view:t.view||{} }] };
+              bookId:t.bookId||'', order: (typeof t.order==='number'? t.order : undefined),
+              view:t.view||{} }] };
 }
 function doExportJSON(tableId){
   const t = db.tables.find(x=>x.id===tableId); if(!t) return;
