@@ -1,2 +1,2 @@
-# app2
+# database for personal use
 database
