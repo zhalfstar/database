@@ -55,7 +55,7 @@ a{color:inherit}
 .brand-mark{width:34px;height:34px;border-radius:9px;background:var(--accent);color:#201505;display:flex;align-items:center;justify-content:center;flex:none}
 .brand-name{font-weight:700;font-size:15px;letter-spacing:.2px}
 .brand-sub{font-size:11px;color:var(--muted)}
-.ver-badge{color:#fff;background:var(--accent);border-radius:5px;padding:0 5px;font-size:10px;margin-left:3px}
+.ver-badge{color:#201505;background:var(--accent);border-radius:5px;padding:0 5px;font-size:10px;margin-left:3px}
 .close-side{margin-left:auto}
 nav{padding:4px 10px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--text);text-decoration:none;font-size:13px}
@@ -450,6 +450,7 @@ th.sorted{color:var(--accent-hi)}
 #field-menu .fm-row span{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:4px 8px;border-radius:8px;font-size:12px;text-align:justify;text-align-last:justify;white-space:nowrap;width:90px;box-sizing:border-box}
 #field-menu .fm-row select{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12px;background:var(--panel);color:var(--text)}
 #field-menu .fm-sec{margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);font-weight:600}
+#field-menu .fm-cur-hint{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);font-size:11.5px;color:var(--text);line-height:1.6;white-space:normal;width:auto;max-width:220px}
 .fm-label{color:var(--muted);min-width:34px;flex:none}
 .fm-sort{display:flex;gap:6px;flex-wrap:wrap}
 .fm-btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:6px;padding:4px 9px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
@@ -1119,8 +1120,8 @@ function onSaveFailed(){
     ov.id = 'storage-full-overlay';
     ov.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35)';
     ov.innerHTML = '<div style="background:var(--panel);border-radius:14px;padding:20px 18px;width:300px;max-width:85vw;box-shadow:0 8px 30px rgba(0,0,0,.2)">'+
-      '<div style="font-weight:600;margin-bottom:10px;font-size:15px;color:#C7453E">存储空间已满</div>'+
-      '<p style="margin:0 0 14px;font-size:13px;color:#333;line-height:1.6">本次修改没能保存成功。已自动清理撤销记录仍不够，建议先导出备份，再删除一些记录或图片释放空间。</p>'+
+      '<div style="font-weight:600;margin-bottom:10px;font-size:15px;color:var(--danger-hi)">存储空间已满</div>'+
+      '<p style="margin:0 0 14px;font-size:13px;color:var(--text);line-height:1.6">本次修改没能保存成功。已自动清理撤销记录仍不够，建议先导出备份，再删除一些记录或图片释放空间。</p>'+
       '<div style="display:flex;gap:8px">'+
         '<button class="btn primary" style="flex:1" onclick="exportJSON();document.getElementById(\'storage-full-overlay\').remove()">导出备份</button>'+
         '<button class="btn ghost" style="flex:none" onclick="document.getElementById(\'storage-full-overlay\').remove()">知道了</button>'+
@@ -2512,7 +2513,7 @@ function shareSingleTable(tableId){
   const html = '<div class="modal small">'+
     '<div class="modal-head"><h2>分享「'+esc(t.name)+'」</h2><button type="button" class="icon-btn" onclick="closeModal()">'+svg('i-x')+'</button></div>'+
     '<div class="modal-body" style="padding:16px">'+
-      '<div style="font-size:12px;color:#888;margin-bottom:12px">选择导出格式，可下载或通过微信分享</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">选择导出格式，可下载或通过微信分享</div>'+
       '<div style="display:flex;flex-direction:column;gap:10px">'+
         '<button class="btn primary" onclick="doShareFmt(\''+tableId+'\',\'json\')">导出 JSON 格式</button>'+
         '<button class="btn primary" onclick="doShareFmt(\''+tableId+'\',\'csv\')">导出 CSV 格式（Excel可打开）</button>'+
@@ -2971,29 +2972,10 @@ function doShareFmt(tableId, fmt){
   }
 }
 function shareOrDownload(blob, fname, title){
-  const file = new File([blob], fname, {type: blob.type});
-  if(navigator.canShare && navigator.canShare({files:[file]})){
-    closeModal();
-    navigator.share({files:[file], title: title}).then(()=>{
-      toast('已导出 '+fname);
-    }).catch(err=>{
-      if(err && err.name==='AbortError') return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = fname;
-      document.body.appendChild(a); a.click();
-      setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},1000);
-      toast('已导出 '+fname);
-    });
-    return;
-  }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = fname;
-  document.body.appendChild(a); a.click();
-  setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},1000);
+  // 优先调起系统分享（微信/QQ/邮件/存储到文件…）；不支持时自动退回下载。
+  // 提示语由 exportFile 统一给：分享成功才说成功，取消就说取消，绝不谎报 ✗
   closeModal();
-  toast('已导出 '+fname);
+  exportFile(blob, fname, {title: title, okMsg: '已分享 ' + fname});
 }
 function openRenameTable(tableId){
   const t = db.tables.find(x=>x.id===tableId); if(!t) return;
@@ -4436,7 +4418,7 @@ function openUndoList(){
     html += '<div class="modal-body">';
     history.forEach((item, i)=>{
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee">';
-      html += '<span>'+esc(item.label || '操作 '+(history.length-i))+' <small style="color:#999">'+new Date(item.time).toLocaleTimeString()+'</small></span>';
+      html += '<span>'+esc(item.label || '操作 '+(history.length-i))+' <small style="color:var(--muted)">'+new Date(item.time).toLocaleTimeString()+'</small></span>';
       html += '<button class="btn sm primary" onclick="undoTo('+i+')">撤销</button>';
       html += '</div>';
     });
@@ -4796,14 +4778,14 @@ function openShare(){
     '<div class="modal-body" style="padding:16px">'+
     '<div style="margin-bottom:14px;padding:12px;border:1px solid var(--line);border-radius:10px">'+
       '<div style="font-weight:600;margin-bottom:4px">空白模板</div>'+
-      '<div style="font-size:12px;color:#888;margin-bottom:10px">不含任何数据，对方打开后是全新空表结构</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">不含任何数据，对方打开后是全新空表结构</div>'+
       '<div style="display:flex;gap:8px">'+
         '<button class="btn sm primary" onclick="downloadTemplate()">下载模板</button>'+
         '<button class="btn sm" onclick="shareTemplate()">分享模板</button>'+
       '</div></div>'+
     '<div style="padding:12px;border:1px solid var(--line);border-radius:10px">'+
       '<div style="font-weight:600;margin-bottom:4px">完整数据</div>'+
-      '<div style="font-size:12px;color:#888;margin-bottom:10px">包含当前所有数据表和记录，对方打开后看到相同数据</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">包含当前所有数据表和记录，对方打开后看到相同数据</div>'+
       '<div style="display:flex;gap:8px">'+
         '<button class="btn sm primary" onclick="downloadSelf()">下载当前文件</button>'+
         '<button class="btn sm" onclick="nativeShare()">分享完整文件</button>'+
@@ -7779,7 +7761,7 @@ function showAlert(msg){
   }
   ov.innerHTML = '<div style="background:var(--panel);border-radius:14px;padding:20px 18px;width:280px;max-width:85vw;box-shadow:0 8px 30px rgba(0,0,0,.2)">'+
     '<div style="font-weight:600;margin-bottom:10px;font-size:15px">提示</div>'+
-    '<p style="margin:0 0 16px;font-size:14px;color:#333">'+esc(msg)+'</p>'+
+    '<p style="margin:0 0 16px;font-size:14px;color:var(--text)">'+esc(msg)+'</p>'+
     '<button class="btn primary" style="width:100%" onclick="document.getElementById(\'alert-overlay\').remove()">我知道了</button>'+
     '</div>';
   ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
@@ -8252,7 +8234,8 @@ function togglePropsMenu(btn){
     moneyRow = `<div class="fm-sec">货币格式</div>
       <div class="fm-row"><span>符号</span><select id="menu-cur-sym" class="fm-sel"><option value="¥"${curSymInput&&curSymInput.value==='¥'?' selected':''}>¥ 人民币</option><option value="$"${curSymInput&&curSymInput.value==='$'?' selected':''}>$ 美元</option><option value="€"${curSymInput&&curSymInput.value==='€'?' selected':''}>€ 欧元</option><option value="£"${curSymInput&&curSymInput.value==='£'?' selected':''}>£ 英镑</option><option value=""${!curSymInput||curSymInput.value===''?' selected':''}>无符号</option></select></div>
       <div class="fm-row"><span>小数位</span><select id="menu-cur-dec" class="fm-sel">${[0,1,2,3,4].map(d=>`<option value="${d}"${curDecInput&&Number(curDecInput.value)===d?' selected':''}>${d} 位</option>`).join('')}</select></div>
-      <div class="fm-row"><span>负数格式</span><select id="menu-cur-neg" class="fm-sel"><option value="minus"${!curNegInput||curNegInput.value==='minus'?' selected':''}>-1,234.56</option><option value="red"${curNegInput&&curNegInput.value==='red'?' selected':''}>红色 -1,234.56</option><option value="paren"${curNegInput&&curNegInput.value==='paren'?' selected':''}>(1,234.56)</option></select></div>`;
+      <div class="fm-row"><span>负数格式</span><select id="menu-cur-neg" class="fm-sel"><option value="minus"${!curNegInput||curNegInput.value==='minus'?' selected':''}>-1,234.56</option><option value="red"${curNegInput&&curNegInput.value==='red'?' selected':''}>红色 -1,234.56</option><option value="paren"${curNegInput&&curNegInput.value==='paren'?' selected':''}>(1,234.56)</option></select></div>
+      <div class="fm-cur-hint" id="menu-cur-hint"></div>`;
   }
   const uniqInput = row.querySelector('.f-unique');
   const uniqVal = uniqInput && uniqInput.value === '1';
@@ -8305,12 +8288,49 @@ function togglePropsMenu(btn){
   if(mb) mb.addEventListener('change', ()=>{
     if(multiInput) multiInput.value = mb.checked ? '1' : '0';
   });
-  const cs = menu.querySelector('#menu-cur-sym');
-  if(cs) cs.addEventListener('change', ()=>{ if(curSymInput) curSymInput.value = cs.value; });
-  const cd = menu.querySelector('#menu-cur-dec');
-  if(cd) cd.addEventListener('change', ()=>{ if(curDecInput) curDecInput.value = cd.value; });
-  const cn = menu.querySelector('#menu-cur-neg');
-  if(cn) cn.addEventListener('change', ()=>{ if(curNegInput) curNegInput.value = cn.value; });
+  // 货币格式：每次改动都**重新查一次字段行**再写隐藏输入框 —— 不能只在建菜单时抓一次引用，
+  // 否则字段行若被重建，写的是已脱离 DOM 的旧元素 → 保存时读到旧值，表现成"改了没反应"✗。
+  // 同时同步一行「当前：…」预览，让用户一眼看到改动生效了（有反馈才不会以为没反应）。
+  if(isMoney){
+    const curHint = menu.querySelector('#menu-cur-hint');
+    const curState = ()=>{
+      const r = btn.closest('.field-row') || row;
+      const s = r.querySelector('.f-cur-sym'), d = r.querySelector('.f-cur-dec'), n = r.querySelector('.f-cur-neg');
+      return {
+        sym: s ? s.value : '',
+        dec: (d && d.value !== '') ? Number(d.value) : 2,
+        neg: (n && n.value) ? n.value : 'minus'
+      };
+    };
+    const syncCurHint = ()=>{
+      if(!curHint) return;
+      const st = curState();
+      const symLabel = st.sym==='¥'?'¥ 人民币':st.sym==='$'?'$ 美元':st.sym==='€'?'€ 欧元':st.sym==='£'?'£ 英镑':'无符号';
+      const negLabel = st.neg==='red'?'红色负数':st.neg==='paren'?'括号负数':'-1,234.56';
+      const sample = (()=>{ const b = (1234).toFixed(st.dec).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return st.neg==='paren' ? '('+b+')' : (st.neg==='red' ? '<span style="color:#d33">-'+b+'</span>' : '-'+b); })();
+      curHint.innerHTML = '当前：' + symLabel + ' · ' + st.dec + ' 位小数 · ' + negLabel
+        + '<br><span style="color:var(--muted)">正数预览 ' + st.sym + (1234).toFixed(st.dec).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        + ' ・ 负数预览 ' + sample + '</span>';
+    };
+    const applyCur = (id, cls)=>{
+      const sel = menu.querySelector(id);
+      if(!sel) return;
+      const run = ()=>{
+        const r = btn.closest('.field-row') || row;
+        const el = r.querySelector(cls);
+        if(el) el.value = sel.value;
+        syncCurHint();
+      };
+      sel.addEventListener('change', run);
+      // iOS 某些版本/某些输入法只派发 input 不派发 change，两个都绑上更稳
+      sel.addEventListener('input', run);
+    };
+    applyCur('#menu-cur-sym', '.f-cur-sym');
+    applyCur('#menu-cur-dec', '.f-cur-dec');
+    applyCur('#menu-cur-neg', '.f-cur-neg');
+    syncCurHint();
+  }
   // make draggable
   const title = menu.querySelector('.fm-title');
   let isDown = false, startX = 0, startY = 0, origX = 0, origY = 0;
@@ -8742,6 +8762,35 @@ function download(blob, filename){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 1200);
 }
+/* 统一的「把文件交给用户」入口。两个踩过的坑：
+   1. iOS Safari 上 <a download> 只会弹出一个「预览页」（带返回/关闭键），用户点返回/关闭就什么都
+      没存 —— 而且**我们无法得知结果**，所以绝不能无条件提示「已导出」，那是假提示 ✗。
+   2. 优先走系统分享（navigator.share），里面有「存储到文件」；成功才提示，用户取消就不提示成功 ✓。 */
+function isIOSDevice(){
+  const ua = navigator.userAgent || '';
+  return /iP(hone|ad|od)/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+function exportFile(blob, fname, opts){
+  opts = opts || {};
+  const okMsg = opts.okMsg || ('已导出 ' + fname);
+  const title = opts.title || '轻量数据库';
+  let file = null;
+  try{ file = new File([blob], fname, {type: blob.type || 'application/octet-stream'}); }catch(e){}
+  if(file && navigator.canShare && navigator.share && navigator.canShare({files:[file]})){
+    navigator.share({files:[file], title: title}).then(()=>{
+      toast(okMsg);
+    }).catch(err=>{
+      if(err && err.name === 'AbortError'){ toast('已取消导出'); return; }   // 用户自己取消，别报成功
+      download(blob, fname);
+      toast('已开始下载 ' + fname + (isIOSDevice() ? '，请在弹出界面选择「存储到文件」' : ''));
+    });
+    return;
+  }
+  download(blob, fname);
+  // 走 <a download> 时拿不到结果：桌面浏览器是直接下载，iOS 会先弹预览页。
+  // 所以这里如实说"已开始下载"，不再谎报"已导出"。
+  toast('已开始下载 ' + fname + (isIOSDevice() ? '，请在弹出界面选择「存储到文件」' : ''));
+}
 /* 侧边栏「导出」：弹窗里勾选要导出的表，然后二选一 ——
    「下载备份」存到本机（给自己换设备/恢复用）；「分享出去」调起微信等系统分享（发给别人导入用）。
    两者导出的**内容完全一样**，只是给文件的方式不同 ✓ */
@@ -8813,13 +8862,12 @@ function doExportSel(kind){
     return;
   }
   download(blob, fname);
-  toast('已下载「' + fname + '」');
+  toast('已开始下载 ' + fname + (isIOSDevice() ? '，请在弹出界面选择「存储到文件」' : ''));
 }
 function exportJSON(){
   if(!db.tables.length){ toast('当前没有数据可导出'); return; }
   const fname = '轻量数据库备份-'+new Date().toISOString().slice(0,10)+'.json';
-  download(new Blob([JSON.stringify(db, null, 2)], {type:'application/json'}), fname);
-  toast('已导出备份 JSON');
+  exportFile(new Blob([JSON.stringify(db, null, 2)], {type:'application/json'}), fname, {okMsg:'已导出备份 JSON'});
 }
 function csvCell(v, f){
   if(f && (f.type==='tags'||f.type==='select')) v = Array.isArray(v) ? v.join(';') : '';
@@ -8851,8 +8899,7 @@ function doExportCSV(tableId){
   const header = ['编号', ...t.fields.map(f=>csvCell(f.name))].join(',');
   const lines = t.rows.map(r => [r.no!=null?r.no:'', ...t.fields.map(f=>csvCell(r.values[f.id], f))].join(','));
   const csv = '\ufeff' + [header, ...lines].join('\r\n');
-  download(new Blob([csv], {type:'text/csv;charset=utf-8'}), name+'.csv');
-  toast('已导出 CSV');
+  exportFile(new Blob([csv], {type:'text/csv;charset=utf-8'}), name+'.csv', {okMsg:'已导出 CSV'});
 }
 function exportTableJSON(tableId){
   const t = db.tables.find(x=>x.id===tableId); if(!t) return;
@@ -8890,8 +8937,7 @@ function doExportJSON(tableId){
   const t = db.tables.find(x=>x.id===tableId); if(!t) return;
   const name = document.getElementById('export-name').value.trim() || t.name;
   closeModal();
-  download(new Blob([JSON.stringify(tableExportPayload(t), null, 2)], {type:'application/json'}), name+'.json');
-  toast('已导出数据表 JSON');
+  exportFile(new Blob([JSON.stringify(tableExportPayload(t), null, 2)], {type:'application/json'}), name+'.json', {okMsg:'已导出数据表 JSON'});
 }
 function importJSON(){
   const inp = document.createElement('input');
