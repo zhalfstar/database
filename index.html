@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-10.3</title>
+<title>轻量数据库 · v2026-10-10.4</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -118,8 +118,18 @@ nav{padding:4px 10px}
 .side-theme{display:flex;align-items:center;gap:9px;background:transparent;border:1px solid var(--line2);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12.5px;transition:background .15s}
 .side-theme:hover{background:var(--panel2)}
 .side-theme > span{flex:none;color:var(--text)}
-.side-theme select{flex:1;min-width:0;border:none;background:transparent;color:var(--text);font-size:12.5px;font-family:inherit;padding:0;margin:0;text-align:right;cursor:pointer;appearance:none;-webkit-appearance:none}
-.side-theme select:focus{outline:none}
+/* 外观选择器用**自绘弹层**，不用原生 <select> ——
+   原生下拉的弹出列表由系统/浏览器渲染，深色模式下会是一块灰白底，和应用主题对不上 ✗。
+   自绘的用主题变量，明暗都对 ✓ */
+.theme-btn{flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:4px;border:none;background:transparent;color:var(--text);font-size:12.5px;font-family:inherit;padding:0;margin:0;cursor:pointer;text-align:right}
+.theme-btn:focus{outline:none}
+.theme-caret{color:var(--muted);font-size:10px;line-height:1}
+#theme-menu{position:fixed;z-index:2500;display:none;flex-direction:column;min-width:150px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.18);padding:4px;animation:menuPop .16s ease}
+#theme-menu.show{display:flex}
+#theme-menu .theme-opt{display:flex;align-items:center;gap:8px;border:none;background:none;color:var(--text);font-size:13px;font-family:inherit;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer}
+#theme-menu .theme-opt:hover{background:var(--panel2)}
+#theme-menu .theme-opt.on{color:var(--accent-hi);font-weight:600}
+#theme-menu .theme-check{width:12px;flex:none;color:var(--accent-hi)}
 /* ===== 概览/文件夹：查看方式 + 排序 ===== */
 /* 列表视图 */
 .ov-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -848,7 +858,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.3">v2026-10-10.3</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.4">v2026-10-10.4</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -858,11 +868,9 @@ html,body{overscroll-behavior-y:none}
   <div class="side-bottom">
     <div class="side-theme">
       <span>外观</span>
-      <select id="theme-sel" onchange="setThemeMode(this.value)" title="浅色 / 深色 / 跟随系统">
-        <option value="auto">跟随系统</option>
-        <option value="light">浅色</option>
-        <option value="dark">深色</option>
-      </select>
+      <button type="button" id="theme-btn" class="theme-btn" onclick="openThemeMenu(this)" title="浅色 / 深色 / 跟随系统" aria-haspopup="menu">
+        <span id="theme-cur">跟随系统</span><span class="theme-caret">▾</span>
+      </button>
     </div>
     <button class="side-act" onclick="openShare()"><svg class="ic" aria-hidden="true"><use href="#i-share" xlink:href="#i-share"/></svg>分享软件</button>
     <button class="side-act" onclick="importJSON()"><svg class="ic" aria-hidden="true"><use href="#i-upload" xlink:href="#i-upload"/></svg>导入备份</button>
@@ -1622,13 +1630,40 @@ function applyTheme(){
   // 状态栏/系统栏配色跟着应用内的明暗走（而不是只跟系统）
   const tm = document.getElementById('theme-color-meta');
   if(tm) tm.setAttribute('content', dark ? '#141C2C' : '#F5F6F8');
+  syncThemeLabel();
 }
 function setThemeMode(m){
   try{ localStorage.setItem(THEME_KEY, m); }catch(e){}
   applyTheme();
-  const sel = $('theme-sel');
-  if(sel) sel.value = themeMode();
+  syncThemeLabel();
 }
+const THEME_LABELS = { auto:'跟随系统', light:'浅色', dark:'深色' };
+function syncThemeLabel(){
+  const el = document.getElementById('theme-cur');
+  if(el) el.textContent = THEME_LABELS[themeMode()] || THEME_LABELS.auto;
+}
+/* 「外观」弹层：自绘而不是原生 <select>，这样深色模式下弹层也是深色的（原生下拉会是一块灰白底） */
+function closeThemeMenu(){ const m = document.getElementById('theme-menu'); if(m) m.remove(); }
+function openThemeMenu(btn){
+  closeThemeMenu();
+  const cur = themeMode();
+  const menu = document.createElement('div');
+  menu.id = 'theme-menu';
+  menu.setAttribute('role','menu');
+  menu.innerHTML = ['auto','light','dark'].map(v=>
+    `<button type="button" role="menuitem" class="theme-opt${v===cur?' on':''}" onclick="setThemeMode('${v}');closeThemeMenu()">`+
+    `<span class="theme-check">${v===cur?'✓':''}</span>${THEME_LABELS[v]}</button>`).join('');
+  document.body.appendChild(menu);
+  placeMenuNear(menu, btn, -40);
+  menu._opening = true;
+  setTimeout(()=>{ menu._opening = false; }, 300);
+}
+document.addEventListener('click', e=>{
+  const m = document.getElementById('theme-menu');
+  if(!m || m._opening) return;
+  if(e.target.closest('#theme-menu') || e.target.closest('#theme-btn')) return;
+  closeThemeMenu();
+}, true);
 try{
   const mq = window.matchMedia('(prefers-color-scheme: dark)');
   const onSys = ()=>{ if(themeMode() === 'auto') applyTheme(); };
@@ -1844,8 +1879,7 @@ function renderSidebar(){
     <a class="tbl-item ${r.view==='table' && bookSheets(t).some(s=>s.id===r.id) ? 'active':''}" href="#/table/${encodeURIComponent(t.id)}" title="${esc(t.name)}">
       ${svg('i-table')}<span class="tbl-name">${esc(bookNameOf(t))}</span><span class="tbl-count">${t.rows.length}</span>
     </a>`).join('') : `<div class="side-empty">暂无数据表</div>`;
-  const thSel = $('theme-sel');
-  if(thSel) thSel.value = themeMode();
+  syncThemeLabel();   // 「外观」自绘弹层的当前值（原来是给原生 <select> 赋值）
   refreshStorageUI();
 }
 
@@ -3417,7 +3451,7 @@ function renderTable(t){
     condRules: `<button type="button" data-key="condRules" onclick="closeMenu('bar-menu');openCondRules('${t.id}')">${svg('i-format')} 条件格式</button>`,
     groupStats: `<button type="button" data-key="groupStats" onclick="closeMenu('bar-menu');openGroupStats('${t.id}')">${svg('i-db')} 分组统计</button>`,
     preview: `<button type="button" data-key="preview" onclick="openPreview('${t.id}');closeMenu('bar-menu')">${svg('i-eye')} 预览</button>`,
-    ioSub: `<div class="submenu-wrap"><button type="button" data-key="ioSub" class="submenu-trigger" onclick="toggleSubmenu(this)">${svg('i-download')} 导入导出 ▸</button>
+    ioSub: `<div class="submenu-wrap" data-key="ioSub"><button type="button" class="submenu-trigger" onclick="toggleSubmenu(this)">${svg('i-download')} 导入导出 ▸</button>
       <div class="submenu" style="display:none">
         <button type="button" onclick="openImportRecords('${t.id}');closeMenu('bar-menu')">${svg('i-upload')} 导入记录（合并）</button>
         <button type="button" onclick="exportCSV('${t.id}');closeMenu('bar-menu')">${svg('i-download')} 导出 CSV</button>
@@ -3506,6 +3540,7 @@ function _sortMove(e){
   }
   if(tIdx === -1) tIdx = children.length - 1;
   const curIdx = children.indexOf(st.drag);
+  if(curIdx === -1) return;   // 保险：拖动项不是容器的直接子项（例如子菜单里的按钮）就绝不搬动它 ✗
   if(tIdx !== curIdx){
     container.insertBefore(st.drag, children[tIdx > curIdx ? tIdx+1 : tIdx]);
     _sortUpdateRects(container);
@@ -3524,9 +3559,17 @@ function enableDragSort(container, key){
     if(e.button !== 0 && e.button !== undefined) return;
     const btn = e.target.closest('button');
     if(!btn || !container.contains(btn)) return;
-    _sortState.drag = btn; _sortState.container = container; _sortState.started = false;
+    // ① 子菜单（.submenu）里的按钮**绝不能**参与排序 —— 否则按住「导出 CSV」往外一拖，
+    //    它会被 insertBefore 到上一层菜单里，菜单结构直接被搞乱 ✗
+    if(btn.closest('.submenu')) return;
+    // ② 参与排序的是「带 data-key 的条目」，且必须是容器的**直接子项**。
+    //    「导入导出」那条的外层是 .submenu-wrap（data-key 挂在它身上），触发按钮不是直接子项，
+    //    直接拿按钮去 insertBefore 会把它从 .submenu-wrap 里拽出来、子菜单就废了 ✗
+    const item = btn.closest('[data-key]');
+    if(!item || item.parentElement !== container) return;
+    _sortState.drag = item; _sortState.container = container; _sortState.started = false;
     _sortState.sx = e.clientX; _sortState.sy = e.clientY;
-    btn.style.zIndex = '5';
+    item.style.zIndex = '5';
   });
   container.addEventListener('click', e=>{ if(Date.now() - _sortLastEnd < 250){ e.stopPropagation(); e.preventDefault(); } }, true);
 }
@@ -4789,7 +4832,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.3</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.4</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
