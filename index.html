@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-10.6</title>
+<title>轻量数据库 · v2026-10-10.9</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -353,7 +353,7 @@ tr.hit-row>td:first-child{box-shadow:inset 3px 0 0 #4285F4}
 #link-mode-bar #link-search{flex:1;box-sizing:border-box;padding:7px 12px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;font-family:inherit;background:var(--input,#fff);color:var(--text);min-width:0}
 #link-mode-bar #link-search:focus{outline:none;border-color:#4285F4}
 #link-mode-bar #link-clear{background:none;border:1px solid var(--line);color:#D93025;border-radius:8px;padding:6px 10px;font-size:12.5px;cursor:pointer;font-family:inherit;flex:none;white-space:nowrap}
-#link-panel{position:fixed;z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,.16);padding:8px;min-width:230px;max-width:min(340px, calc(100vw - 24px))}
+#link-panel{position:fixed;z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,.16);padding:8px;min-width:230px;max-width:min(340px, calc(100vw - 24px));animation:menuPop .16s ease}
 #link-panel .lp-title{font-size:12px;color:var(--muted);padding:4px 10px 6px;font-weight:600}
 #link-panel .lp-group{border-top:1px solid var(--line);padding:8px 10px}
 #link-panel .lp-fname{font-size:13px;font-weight:600;color:var(--text)}
@@ -461,6 +461,13 @@ th.sorted{color:var(--accent-hi)}
 /* 注意：这里的背景是**浅色药丸**，必须同时写死文字色 —— 否则深色模式下继承主题的浅色文字
    会落在浅底上看不清（铅笔「字段设置」菜单就踩过这个坑）✗。所以下面 span/sec 都显式给 color。 */
 #field-menu .fm-row span{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:4px 8px;border-radius:8px;font-size:12px;text-align:justify;text-align-last:justify;white-space:nowrap;width:90px;box-sizing:border-box}
+/* 复选框行（必填 / 允许多选 / 禁止重复值 / 隐藏字段 / 默认当前时间）：
+   **标题在左、复选框在右**；标题药丸**宽度与其他行完全一致**（沿用基类的 90px + 两端对齐），
+   只把复选框用 margin-right:auto 推到最右边 —— 用户要求"每个胶囊长度一样、字体分散对齐"。
+   注意标签文案要控制在 6 个汉字以内（"默认填当前时间"7 字会撑出 90px 边界，已改成"默认当前时间"）。 */
+#field-menu .fm-row.fm-chk{gap:10px}
+#field-menu .fm-row.fm-chk span{margin-right:auto}
+#field-menu .fm-row.fm-chk input[type=checkbox]{width:16px;height:16px;flex:none;margin:0;cursor:pointer}
 #field-menu .fm-row select{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12px;background:var(--panel);color:var(--text)}
 #field-menu .fm-sec{margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);font-weight:600}
 #field-menu .fm-cur-hint{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);font-size:11.5px;color:var(--text);line-height:1.6;white-space:normal;width:auto;max-width:220px}
@@ -615,7 +622,7 @@ input.in.err:focus{box-shadow:0 0 0 3px rgba(229,97,91,.12)!important}
 .field-row .f-name{flex:1}
 .fr-drag-handle{cursor:grab;user-select:none;display:inline-flex;align-items:center;padding:4px;color:var(--muted)}
 .fr-drag-handle:active{cursor:grabbing}
-.opt-editor{display:none;flex:1 1 100%;flex-direction:column;gap:8px;background:var(--bg);border:1px dashed var(--line2);border-radius:8px;padding:10px;margin-top:2px}
+.opt-editor{display:none;flex:1 1 100%;flex-direction:column;gap:8px;background:var(--bg);border:1px dashed var(--line2);border-radius:8px;padding:10px;margin-top:2px;animation:menuPop .16s ease}
 .opt-editor.show{display:flex}
 .opt-add{display:flex;gap:8px;align-items:center}
 .opt-add .opt-input{flex:1}
@@ -643,7 +650,7 @@ input.in.err:focus{box-shadow:0 0 0 3px rgba(229,97,91,.12)!important}
 .msel-btn:hover{border-color:var(--accent)}
 .msel-val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msel-btn .ic{flex:none;color:var(--muted)}
-.msel-pop{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--panel2);border:1px solid var(--line2);border-radius:10px;box-shadow:0 14px 34px rgba(15,23,42,.16);padding:6px;z-index:70;max-height:220px;overflow-y:auto}
+.msel-pop{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--panel2);border:1px solid var(--line2);border-radius:10px;box-shadow:0 14px 34px rgba(15,23,42,.16);padding:6px;z-index:70;max-height:220px;overflow-y:auto;animation:menuPop .16s ease}
 .msel-pop.show{display:block}
 .msel-opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;cursor:pointer}
 .msel-opt:hover{background:var(--panel)}
@@ -669,7 +676,7 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
 /* 浮层出现动画（统一一套）。弹窗(.modal/.toast)一直有 pop；
    字段设置/列操作/页签菜单、概览长按菜单、更多菜单、子菜单、类型选择、上次记录、
    关联面板、分组面板、搜索结果… 这些浮层以前是"啪"地直接出现，现在都用同一套动画 ✓ */
-@keyframes menuPop{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes menuPop{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
 
 /* ===== Toast ===== */
 #toast-root{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
@@ -733,6 +740,8 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
   .side-theme{grid-column:1 / -1}
   .storage{grid-column:1 / -1;margin-top:2px}
   .side-act{padding:7px 9px;font-size:12px}
+  /* 「外观」这一行要和上面的按钮**同内边距**，否则横屏下图标/文字会错开 1px，对不齐 */
+  .side-theme{padding:7px 9px;font-size:12px}
   .storage-hint{font-size:10px}
   #view{padding:12px calc(16px + var(--sai-l,0px)) calc(20px + var(--sai-b,0px)) calc(16px + var(--sai-r,0px))}
   .overlay{padding:2vh 12px 12px}
@@ -854,6 +863,7 @@ html,body{overscroll-behavior-y:none}
   <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-auto" viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></symbol>
   <symbol id="i-star-o" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-theme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v11m0-11L8 7m4-4 4 4"/><path d="M5 12v8h14v-8"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></symbol>
   <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 5.2A9.9 9.9 0 0 1 12 5c5 0 9 4 9 7a8.6 8.6 0 0 1-2.2 3.6M6.1 6.1A9 9 0 0 0 3 12c0 3 4 7 9 7a9.6 9.6 0 0 0 4-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
@@ -862,7 +872,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.6">v2026-10-10.6</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.9">v2026-10-10.9</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -871,7 +881,7 @@ html,body{overscroll-behavior-y:none}
   <div id="table-list"></div>
   <div class="side-bottom">
     <div class="side-theme">
-      <span>外观</span>
+      <svg class="ic" aria-hidden="true"><use href="#i-theme" xlink:href="#i-theme"/></svg><span>外观</span>
       <button type="button" id="theme-btn" class="theme-btn" onclick="openThemeMenu(this)" title="浅色 / 深色 / 跟随系统" aria-haspopup="menu">
         <span id="theme-cur">跟随系统</span><span class="theme-caret">▾</span>
       </button>
@@ -4894,7 +4904,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>管理表结构</b>：铅笔图标设置必填、隐藏字段、多选/单选；<b>货币字段</b>还能设符号（¥/$/€/£/无）、小数位、负数格式</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>拖动弹窗</b>：「管理表结构」这类弹窗可以按住<b>标题栏或字段区</b>拖动位置；字段行里的输入框/按钮仍可正常点按</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>公式字段</b>：字段类型选「公式」，在字段设置里点「编辑公式」，用 <b>[字段名]</b> 写算式（如 <b>[单价] * [数量]</b>），支持 + - * / ( )。结果自动算、能参与排序和搜索；勾「按金额显示」就带 ¥ 和两位小数</p>'+
-    '<p style="margin:4px 0;font-size:13px">• <b>时间字段默认值</b>：日期/时间字段的「字段设置」里可勾「默认填当前时间」，勾了以后新建记录会自动预填当前日期/时刻；不勾则留空由你选</p>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>时间字段默认值</b>：日期/时间字段的「字段设置」里可勾「默认当前时间」，勾了以后新建记录会自动预填当前日期/时刻；不勾则留空由你选</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>求和统计</b>：表头字段菜单里点「求和统计」，对数字、货币字段直接出汇总</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>条件格式</b>：右上「更多」→「条件格式」，加规则让满足条件的行自动变色（例如「库存 小于 10」→ 整行标红）。规则自上而下匹配，<b>第一条命中的生效</b>，可用 ▲▼ 调顺序；你手动设过的行颜色优先于规则</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>分组统计</b>：右上「更多」→「分组统计」，按某列分组、对另一列求和/计数/平均/最大/最小，结果带条形对比。多项选择字段的一条记录若选了多个值，会在每个值下各计一次</p>'+
@@ -4921,7 +4931,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.6</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.9</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -6684,7 +6694,7 @@ function clearTrash(){
 }
 
 /* ===== 记录弹窗 ===== */
-// 日期/时间字段勾了「默认填当前时间」时，新建记录用当前时刻预填。
+// 日期/时间字段勾了「默认当前时间」时，新建记录用当前时刻预填。
 // 用本地时间手工拼串，不能用 toISOString()（那是 UTC，会差几个小时）。
 function nowForType(type){
   const d = new Date(), p = n => String(n).padStart(2,'0');
@@ -6941,7 +6951,7 @@ function openRecordModal(tableId, rowId){
     });
     const _si0 = document.getElementById('smart-input');
     if(_si0) _si0.addEventListener('input', ()=>{ _si0.dataset.filled = '1'; });
-    // 「默认填当前时间」预填的也是程序赋值，必须打标，否则会被下面的 clearVal 当成浏览器自动填充清掉
+    // 「默认当前时间」预填的也是程序赋值，必须打标，否则会被下面的 clearVal 当成浏览器自动填充清掉
     t.fields.forEach(f=>{
       if(!f.defNow) return;
       const el = document.querySelector('#modal-root [data-fid="'+f.id+'"]');
@@ -7915,7 +7925,7 @@ function resetRecordModalInPlace(tableId){
   const m = document.querySelector('#modal-root .modal.rec-modal');
   if(!t || !m || !m.querySelector('#smart-input')) return false;
   if(m.querySelector('#rec-opt-editcont')) return false;
-  clearSmartForm(tableId);                                  // 字段回到默认值（含"默认填当前时间"）
+  clearSmartForm(tableId);                                  // 字段回到默认值（含"默认当前时间"）
   refreshFormulaCells(tableId);
   const si = document.getElementById('smart-input');
   if(si){ clearInputKeepVoice(si); si.dataset.filled = '1'; }   // 按「清空方式」清，尽量不打断听写
@@ -8367,7 +8377,7 @@ function togglePropsMenu(btn){
   const isMoney = typePick && typePick.dataset.t === 'money';
   let multiRow = '';
   if(isSelect){
-    multiRow = `<div class="fm-row"><input type="checkbox" id="menu-multi"${multiVal?' checked':''}><span>允许多选</span></div>`;
+    multiRow = `<div class="fm-row fm-chk"><span>允许多选</span><input type="checkbox" id="menu-multi"${multiVal?' checked':''}></div>`;
   }
   const curSymInput = row.querySelector('.f-cur-sym');
   const curDecInput = row.querySelector('.f-cur-dec');
@@ -8382,24 +8392,24 @@ function togglePropsMenu(btn){
   }
   const uniqInput = row.querySelector('.f-unique');
   const uniqVal = uniqInput && uniqInput.value === '1';
-  // 日期/时间类字段：可设「默认填当前时间」（新建记录时自动预填录入时刻）
+  // 日期/时间类字段：可设「默认当前时间」（新建记录时自动预填录入时刻）
   const isFormula = typePick && typePick.dataset.t === 'formula';
   const isTimeType = typePick && ['date','time','datetime','book'].includes(typePick.dataset.t);
   const dnInput = row.querySelector('.f-defnow');
   const dnVal = dnInput && dnInput.value === '1';
-  const defNowRow = isTimeType ? `<div class="fm-row"><input type="checkbox" id="menu-defnow"${dnVal?' checked':''}><span>默认填当前时间</span></div>` : '';
+  const defNowRow = isTimeType ? `<div class="fm-row fm-chk"><span>默认当前时间</span><input type="checkbox" id="menu-defnow"${dnVal?' checked':''}></div>` : '';
   const fxRow = isFormula ? `<div class="fm-row"><button type="button" class="btn sm" id="menu-fx-edit" style="width:100%">✎ 编辑公式</button></div>` : '';
   const menu = document.createElement('div');
   menu.id = 'field-menu';
   menu._row = row;   // 记住是给哪一行开的，再点同一行的铅笔就收起
   menu.innerHTML = `<div class="fm-title">${isFormula ? '公式字段设置' : '字段设置'}</div>
-    <div class="fm-row"><input type="checkbox" id="menu-req"${reqVal?' checked':''}><span>必填</span></div>
+    <div class="fm-row fm-chk"><span>必填</span><input type="checkbox" id="menu-req"${reqVal?' checked':''}></div>
     ${multiRow}
     ${moneyRow}
     ${defNowRow}
     ${fxRow}
-    <div class="fm-row"><input type="checkbox" id="menu-uniq"${uniqVal?' checked':''}><span>禁止重复值</span></div>
-    <div class="fm-row"><input type="checkbox" id="menu-hid"${hidVal?' checked':''}><span>隐藏字段</span></div>`;
+    <div class="fm-row fm-chk"><span>禁止重复值</span><input type="checkbox" id="menu-uniq"${uniqVal?' checked':''}></div>
+    <div class="fm-row fm-chk"><span>隐藏字段</span><input type="checkbox" id="menu-hid"${hidVal?' checked':''}></div>`;
   document.body.appendChild(menu);
   placeMenuNear(menu, btn, -80);
   menu._opening = true;
