@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-10.10</title>
+<title>轻量数据库 · v2026-10-10.11</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -124,7 +124,7 @@ nav{padding:4px 10px}
 .theme-btn{flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:4px;border:none;background:transparent;color:var(--text);font-size:12.5px;font-family:inherit;padding:0;margin:0;cursor:pointer;text-align:right}
 .theme-btn:focus{outline:none}
 .theme-caret{color:var(--muted);font-size:10px;line-height:1}
-#theme-menu{position:fixed;z-index:2500;display:none;flex-direction:column;min-width:150px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.18);padding:4px;animation:menuPop .16s ease}
+#theme-menu{position:fixed;z-index:2500;display:none;flex-direction:column;min-width:150px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.18);padding:4px;animation:menuPop .2s ease}
 #theme-menu.show{display:flex}
 #theme-menu .theme-opt{display:flex;align-items:center;gap:8px;border:none;background:none;color:var(--text);font-size:13px;font-family:inherit;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer}
 #theme-menu .theme-opt:hover{background:var(--panel2)}
@@ -162,7 +162,7 @@ nav{padding:4px 10px}
 #storage-bar.hot{background:var(--danger)}
 /* ===== 全局搜索 ===== */
 .top-searches{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
-.gresults{position:absolute;top:calc(100% + 6px);right:0;width:330px;max-width:calc(100vw - 16px);max-height:62vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 10px 28px rgba(15,23,42,.16);z-index:60;padding:6px;display:none;animation:menuPop .16s ease}
+.gresults{position:absolute;top:calc(100% + 6px);right:0;width:330px;max-width:calc(100vw - 16px);max-height:62vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 10px 28px rgba(15,23,42,.16);z-index:60;padding:6px;display:none;animation:menuPop .2s ease}
 .gr-item{display:block;padding:8px 10px;border-radius:8px;color:var(--text);cursor:pointer}
 .gr-item:hover{background:var(--panel2)}
 .gr-tname{display:block;font-size:11px;color:var(--muted)}
@@ -276,7 +276,7 @@ body.table-page-body{overflow:hidden}
   #view.table-page .back{font-size:12px}
 }
 .bar-menu-wrap{position:relative}
-.bar-menu{position:absolute;right:0;bottom:calc(100% + 6px);background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 30px rgba(15,23,42,.12);padding:6px;display:flex;flex-direction:column;min-width:178px;z-index:40;animation:menuPop .16s ease}
+.bar-menu{position:absolute;right:0;bottom:calc(100% + 6px);background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 30px rgba(15,23,42,.12);padding:6px;display:flex;flex-direction:column;min-width:178px;z-index:40;animation:menuPop .2s ease}
 .bar-menu button{display:flex;align-items:center;gap:8px;background:none;border:none;padding:9px 12px;font-size:13px;color:var(--text);cursor:pointer;border-radius:8px;text-align:left;font-family:inherit;white-space:nowrap}
 .bar-menu button:hover{background:var(--panel2)}
 table.grid{width:100%;border-collapse:collapse;table-layout:auto}
@@ -285,7 +285,7 @@ table.grid.fixed td{overflow:hidden;text-overflow:ellipsis}
 table.grid th,table.grid td{padding:9px 12px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);font-size:13px;vertical-align:middle;text-align:left;white-space:nowrap;height:var(--rowH,auto)}
 table.grid td{position:relative}
 table.grid .g-num{position:absolute;top:0;right:0;font-size:9px;line-height:1;min-width:11px;text-align:center;padding:1px 2px;background:#3a3f47;color:#fff;border-radius:0 0 0 3px;pointer-events:auto;cursor:pointer}
-#group-panel{position:fixed;z-index:999;min-width:150px;max-width:260px;max-height:none;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.14);padding:10px 12px;font-size:13px;color:var(--text);animation:menuPop .16s ease}
+#group-panel{position:fixed;z-index:999;min-width:150px;max-width:260px;max-height:none;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.14);padding:10px 12px;font-size:13px;color:var(--text);animation:menuPop .2s ease}
 #group-panel .gp-title{font-weight:600;margin-bottom:8px;color:var(--text)}
 #group-panel .gp-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 0}
 #group-panel .gp-name{flex:1;cursor:pointer;padding:5px 6px;border-radius:6px;color:var(--text)}
@@ -321,7 +321,7 @@ table.grid tr.link-picked td{background:rgba(66,133,244,.16)}
 table.grid tr.link-rel td{background:rgba(66,133,244,.14);border-top:1px solid #4285F4;border-bottom:1px solid #4285F4}
 table.grid tr.link-rel td.no-cell{box-shadow:inset 4px 0 0 #4285F4}
 table.grid tr.hit td{background:rgba(232,163,61,.10)}
-#link-mode-bar{position:fixed;top:8px;left:8px;width:min(92vw,420px);z-index:70;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 24px rgba(15,23,42,.15);padding:10px 12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;overflow:auto;touch-action:none;cursor:grab;animation:menuPop .16s ease}
+#link-mode-bar{position:fixed;top:8px;left:8px;width:min(92vw,420px);z-index:70;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 24px rgba(15,23,42,.15);padding:10px 12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;overflow:auto;touch-action:none;cursor:grab;animation:menuPop .2s ease}
 #link-mode-bar:active{cursor:grabbing}
 .gp-name.gp-x{color:#1f6feb;background:rgba(31,111,235,.08);border-radius:6px;padding:1px 6px;font-weight:600}
 tr.flash-row{animation:rowFlash 1.9s ease}
@@ -353,7 +353,7 @@ tr.hit-row>td:first-child{box-shadow:inset 3px 0 0 #4285F4}
 #link-mode-bar #link-search{flex:1;box-sizing:border-box;padding:7px 12px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;font-family:inherit;background:var(--input,#fff);color:var(--text);min-width:0}
 #link-mode-bar #link-search:focus{outline:none;border-color:#4285F4}
 #link-mode-bar #link-clear{background:none;border:1px solid var(--line);color:#D93025;border-radius:8px;padding:6px 10px;font-size:12.5px;cursor:pointer;font-family:inherit;flex:none;white-space:nowrap}
-#link-panel{position:fixed;z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,.16);padding:8px;min-width:230px;max-width:min(340px, calc(100vw - 24px));animation:menuPop .16s ease}
+#link-panel{position:fixed;z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,.16);padding:8px;min-width:230px;max-width:min(340px, calc(100vw - 24px));animation:menuPop .2s ease}
 #link-panel .lp-title{font-size:12px;color:var(--muted);padding:4px 10px 6px;font-weight:600}
 #link-panel .lp-group{border-top:1px solid var(--line);padding:8px 10px}
 #link-panel .lp-fname{font-size:13px;font-weight:600;color:var(--text)}
@@ -365,14 +365,14 @@ tr.hit-row>td:first-child{box-shadow:inset 3px 0 0 #4285F4}
 .submenu-wrap{position:relative}
 .submenu-wrap.show .submenu{display:block}
 .submenu-trigger{width:100%;text-align:left}
-.submenu{position:absolute;left:100%;top:0;min-width:160px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:99;padding:4px;animation:menuPop .16s ease}
+.submenu{position:absolute;left:100%;top:0;min-width:160px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:99;padding:4px;animation:menuPop .2s ease}
 /* 子菜单是一个**独立小浮层**：默认贴在主菜单旁边（主菜单靠右 → 放它左侧），
    并且**可以用手指/鼠标拖着走**（用户要求）。
    用 position:fixed 让它脱离主菜单的 overflow 裁剪，不会被菜单的滚动条切掉 ✓ */
 .submenu{position:fixed;z-index:1200;width:max-content;min-width:150px;max-width:calc(100vw - 16px);
   background:var(--panel);border:1px solid var(--line);
   border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,.18);padding:4px;touch-action:none;cursor:move;
-  animation:menuPop .16s ease}
+  animation:menuPop .2s ease}
 .submenu button{display:flex;align-items:center;gap:6px;width:100%;padding:8px 10px;border:none;background:none;text-align:left;font-size:13px;cursor:pointer;border-radius:6px;color:var(--text)}
 .submenu button:hover{background:var(--bg)}
 .smart-input{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;min-height:52px;background:var(--panel);color:var(--text)}
@@ -406,8 +406,8 @@ th.sorted{color:var(--accent-hi)}
 .fm-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12.5px;color:var(--text)}
 .fm-stats-grid span{display:flex;justify-content:space-between}
 .fm-stats-grid b{color:var(--accent)}
-#field-menu{position:fixed;z-index:300;width:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.14);padding:10px 12px;display:none;animation:menuPop .16s ease}
-#ov-menu{position:fixed;z-index:3000;min-width:190px;max-width:min(300px,88vw);background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.14);padding:6px 0;font-size:13px;animation:menuPop .16s ease}
+#field-menu{position:fixed;z-index:300;width:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.14);padding:10px 12px;display:none;animation:menuPop .2s ease}
+#ov-menu{position:fixed;z-index:3000;min-width:190px;max-width:min(300px,88vw);background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.14);padding:6px 0;font-size:13px;animation:menuPop .2s ease}
 .ovm-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;cursor:pointer;color:var(--text);border-radius:7px;white-space:nowrap}
 .ovm-row:hover{background:var(--panel2)}
 .ovm-row.ovm-back{color:var(--muted);font-size:12.5px}
@@ -513,7 +513,7 @@ td.num,th.num{text-align:right}
 .tp-btn{display:flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:8px;padding:7px 10px;background:var(--bg);font-size:13px;cursor:pointer}
 .tp-ic{display:inline-flex;color:var(--muted)}
 .tp-ic svg{width:16px;height:16px}
-.tp-pop{position:absolute;top:calc(100% + 4px);left:0;min-width:170px;max-height:280px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:60;display:none;padding:4px;animation:menuPop .16s ease}
+.tp-pop{position:absolute;top:calc(100% + 4px);left:0;min-width:170px;max-height:280px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:60;display:none;padding:4px;animation:menuPop .2s ease}
 .tp-pop.show{display:block}
 .tp-opt{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;justify-content:space-between}
 .tp-opt:hover,.tp-opt.sel{background:var(--line)}
@@ -541,7 +541,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
 /* ===== 弹窗 ===== */
 .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:flex-start;justify-content:center;z-index:60;padding:6vh 16px 16px;overflow-y:auto}
 .overlay:has(.rec-modal){padding:0;background:rgba(0,0,0,0)}
-.modal{background:var(--panel);border:1px solid var(--line2);border-radius:14px;width:100%;max-width:560px;box-shadow:0 24px 60px rgba(15,23,42,.18);animation:pop .16s ease;display:flex;flex-direction:column;position:fixed}
+.modal{background:var(--panel);border:1px solid var(--line2);border-radius:14px;width:100%;max-width:560px;box-shadow:0 24px 60px rgba(15,23,42,.18);animation:pop .2s ease;display:flex;flex-direction:column;position:fixed}
 #format-panel{position:fixed;background:var(--panel);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.2);z-index:1000;padding:16px;min-width:220px}
 #format-panel.show{display:block}
 .res-handle{position:absolute;right:0;bottom:0;width:40px;height:40px;cursor:nwse-resize;touch-action:none;z-index:7;background:linear-gradient(135deg,transparent 55%,rgba(66,133,244,.5) 55%,rgba(66,133,244,.5) 65%,transparent 65%),linear-gradient(135deg,transparent 72%,rgba(66,133,244,.35) 72%,rgba(66,133,244,.35) 82%,transparent 82%);border-bottom-right-radius:20px}
@@ -622,7 +622,7 @@ input.in.err:focus{box-shadow:0 0 0 3px rgba(229,97,91,.12)!important}
 .field-row .f-name{flex:1}
 .fr-drag-handle{cursor:grab;user-select:none;display:inline-flex;align-items:center;padding:4px;color:var(--muted)}
 .fr-drag-handle:active{cursor:grabbing}
-.opt-editor{display:none;flex:1 1 100%;flex-direction:column;gap:8px;background:var(--bg);border:1px dashed var(--line2);border-radius:8px;padding:10px;margin-top:2px;animation:menuPop .16s ease}
+.opt-editor{display:none;flex:1 1 100%;flex-direction:column;gap:8px;background:var(--bg);border:1px dashed var(--line2);border-radius:8px;padding:10px;margin-top:2px;animation:menuPop .2s ease}
 .opt-editor.show{display:flex}
 .opt-add{display:flex;gap:8px;align-items:center}
 .opt-add .opt-input{flex:1}
@@ -650,12 +650,20 @@ input.in.err:focus{box-shadow:0 0 0 3px rgba(229,97,91,.12)!important}
 .msel-btn:hover{border-color:var(--accent)}
 .msel-val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msel-btn .ic{flex:none;color:var(--muted)}
-.msel-pop{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--panel2);border:1px solid var(--line2);border-radius:10px;box-shadow:0 14px 34px rgba(15,23,42,.16);padding:6px;z-index:70;max-height:220px;overflow-y:auto;animation:menuPop .16s ease}
+.msel-pop{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--panel2);border:1px solid var(--line2);border-radius:10px;box-shadow:0 14px 34px rgba(15,23,42,.16);padding:6px;z-index:70;max-height:220px;overflow-y:auto;animation:menuPop .2s ease}
 .msel-pop.show{display:block}
 .msel-opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;cursor:pointer}
 .msel-opt:hover{background:var(--panel)}
 .msel-clear{width:100%;margin-top:4px;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:5px;font-size:12px;cursor:pointer}
 .msel-clear:hover{color:var(--danger-hi);border-color:rgba(229,97,91,.4)}
+/* 自绘下拉（替代原生 <select>）：原生下拉的**弹出列表由系统渲染**（iOS 是系统滚轮、Windows 是系统菜单），
+   只跟随系统明暗、跟不了应用主题 —— 应用切浅色而系统是深色时，弹出来就是深色的 ✗。
+   .msel-single 就是「把原生 select 换成按钮 + 主题化弹层」用的（见 skinSelect()）。 */
+.msel-single{flex:1;min-width:0}
+.msel-single .msel-btn{padding:5px 8px;font-size:12.5px;background:var(--panel);border-color:var(--line)}
+button.msel-opt{width:100%;border:none;background:none;color:var(--text);font-family:inherit;text-align:left}
+button.msel-opt:hover{background:var(--panel)}
+.msel-tick{margin-left:auto;color:var(--accent-hi);font-weight:700}
 select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;outline:none;font-family:inherit}
 .switch-line{display:flex;align-items:center;gap:8px;font-size:13px}
 .rec-no{font-size:12px;color:var(--muted);font-family:var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 10px;align-self:flex-start}
@@ -664,7 +672,7 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
 .last-rec-body{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;line-height:1.6}
 .last-rec-body b{font-weight:600}
 .last-rec-body .last-rec-val{color:var(--danger-hi);font-style:normal;font-weight:600}
-.last-rec-pop{position:fixed;z-index:2000;width:min(330px,88vw);max-height:46vh;display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 32px rgba(15,23,42,.22);font-size:13px;user-select:none;-webkit-user-select:none;animation:menuPop .16s ease}
+.last-rec-pop{position:fixed;z-index:2000;width:min(330px,88vw);max-height:46vh;display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 32px rgba(15,23,42,.22);font-size:13px;user-select:none;-webkit-user-select:none;animation:menuPop .2s ease}
 /* 右下角的缩放把手 —— 用户要求「上次记录弹窗大小可以调整」。
    注意：滚动条必须在内层 .last-rec-body 上，不能留在 .last-rec-pop 上 ——
    否则 absolute 定位的把手会跟着内容一起滚走 ✗ */
@@ -679,15 +687,15 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
 .last-rec-pop .last-rec-body{flex:1 1 auto;min-height:0;overflow:auto;display:flex;flex-wrap:wrap;gap:4px 12px;padding:10px 12px;line-height:1.6;cursor:pointer}
 .last-rec-pop .last-rec-body b{font-weight:600;color:var(--text)}
 .confirm-body{font-size:13.5px;padding:10px 2px;line-height:1.7}
-@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:none}}
 /* 浮层出现动画（统一一套）。弹窗(.modal/.toast)一直有 pop；
    字段设置/列操作/页签菜单、概览长按菜单、更多菜单、子菜单、类型选择、上次记录、
    关联面板、分组面板、搜索结果… 这些浮层以前是"啪"地直接出现，现在都用同一套动画 ✓ */
-@keyframes menuPop{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes menuPop{from{opacity:0;transform:translateY(14px) scale(.92)}to{opacity:1;transform:none}}
 
 /* ===== Toast ===== */
 #toast-root{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
-.toast{background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:14px 24px;border-radius:10px;font-size:14px;box-shadow:0 12px 36px rgba(15,23,42,.2);animation:pop .18s ease;max-width:80vw;text-align:center}
+.toast{background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:14px 24px;border-radius:10px;font-size:14px;box-shadow:0 12px 36px rgba(15,23,42,.2);animation:pop .22s ease;max-width:80vw;text-align:center}
 .toast.out{opacity:0;transition:opacity .25s}
 
 /* ===== 响应式 ===== */
@@ -879,7 +887,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.10">v2026-10-10.10</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.11">v2026-10-10.11</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -1484,6 +1492,9 @@ function openModal(inner){
     if(prev._vvCleanup){ try{ prev._vvCleanup(); }catch(e){} prev._vvCleanup = null; }
     if(prev._roScroll){ try{ prev._roScroll.disconnect(); }catch(e){} prev._roScroll = null; }
   }
+  // 「字段设置」菜单挂在 <body> 上，换弹窗时不会跟着 #modal-root 一起被清掉 ——
+  // 不清的话它会留在屏幕上盖住新弹窗的内容 ✗
+  closeFieldMenu();
   $('modal-root').innerHTML = `<div class="overlay" onclick="if(event.target===this)closeModal()">${inner}</div>`;
   // Freeze rec-modal position so keyboard popup doesn't shift it
   setTimeout(()=>{
@@ -1566,6 +1577,9 @@ function closeModal(){
   if(_rm && _rm._vvCleanup){ _rm._vvCleanup(); _rm._vvCleanup = null; }
   if(_rm && _rm._roScroll){ try{ _rm._roScroll.disconnect(); }catch(e){} _rm._roScroll = null; }
   closeLastRecPop();
+  // 「字段设置」菜单是挂在 <body> 上的，不在 #modal-root 里 —— 不清掉的话关掉弹窗后
+  // 它会孤零零留在屏幕上盖住下面的内容（用户点不到底下的东西）✗
+  closeFieldMenu();
   $('modal-root').innerHTML='';
   // 叠层弹窗（多选值设置等）被一起清掉时，同步清空它对行节点的引用，
   // 否则残留的 window._currentOptRow 会让后续操作作用到已脱离文档的节点上
@@ -1666,6 +1680,9 @@ function syncThemeLabel(){
 /* 「外观」弹层：自绘而不是原生 <select>，这样深色模式下弹层也是深色的（原生下拉会是一块灰白底） */
 function closeThemeMenu(){ const m = document.getElementById('theme-menu'); if(m) m.remove(); }
 function openThemeMenu(btn){
+  // 再点同一个「外观」按钮 → 收起弹层（用户要求：点一下开，再点一下收）
+  const opened = document.getElementById('theme-menu');
+  if(opened && opened._anchor === btn){ closeThemeMenu(); return; }
   closeThemeMenu();
   const cur = themeMode();
   const menu = document.createElement('div');
@@ -1687,6 +1704,7 @@ function openThemeMenu(btn){
   if(top < 8) top = Math.max(8, Math.min(window.innerHeight - mh - 8, rr.bottom + 6));
   menu.style.left = Math.round(left) + 'px';
   menu.style.top = Math.round(top) + 'px';
+  menu._anchor = btn;      // 记住是哪个按钮开的，再点同一个就收起
   menu._opening = true;
   setTimeout(()=>{ menu._opening = false; }, 300);
 }
@@ -3605,6 +3623,51 @@ function enableDragSort(container, key){
   });
   container.addEventListener('click', e=>{ if(Date.now() - _sortLastEnd < 250){ e.stopPropagation(); e.preventDefault(); } }, true);
 }
+/* 把原生 <select> 换成**自绘下拉**。
+   为什么必须换：原生下拉的弹出列表是**系统渲染**的（iOS 系统滚轮 / Windows 系统菜单），
+   只跟随系统明暗，跟不了应用内主题 —— 应用切浅色、系统是深色时，弹出来就是深色的 ✗。
+   做法：原生 select **保留在 DOM 里**（只是隐藏），取值和 change/input 事件照旧派发，
+   所以所有现有的 onchange 逻辑一行都不用改 ✓ */
+function skinSelect(sel){
+  if(!sel || sel._skinned || sel.dataset.noskin !== undefined) return;
+  sel._skinned = true;
+  const wrap = document.createElement('div');
+  wrap.className = 'msel msel-single';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'msel-btn';
+  const pop = document.createElement('div');
+  pop.className = 'msel-pop';
+  const sync = ()=>{
+    const o = sel.options[sel.selectedIndex];
+    btn.innerHTML = '<span class="msel-val">' + esc(o ? o.textContent : '') + '</span>' + svg('i-down');
+  };
+  const fill = ()=>{
+    pop.innerHTML = [...sel.options].map((o,i)=>
+      '<button type="button" class="msel-opt" data-i="' + i + '">' + esc(o.textContent) +
+      (i === sel.selectedIndex ? '<span class="msel-tick">✓</span>' : '') + '</button>').join('');
+  };
+  fill(); sync();
+  wrap.appendChild(btn); wrap.appendChild(pop);
+  sel.parentNode.insertBefore(wrap, sel);
+  sel.style.display = 'none';
+  btn.addEventListener('click', e=>{
+    e.preventDefault(); e.stopPropagation();
+    const wasOpen = pop.classList.contains('show');
+    document.querySelectorAll('.msel-pop.show').forEach(p=>p.classList.remove('show'));
+    if(!wasOpen){ fill(); pop.classList.add('show'); }
+  });
+  pop.addEventListener('click', e=>{
+    const b = e.target.closest && e.target.closest('.msel-opt');
+    if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    sel.selectedIndex = Number(b.dataset.i);
+    sync(); pop.classList.remove('show');
+    sel.dispatchEvent(new Event('change', { bubbles:true }));
+    sel.dispatchEvent(new Event('input',  { bubbles:true }));
+  });
+}
+function skinSelectsIn(root){ if(root && root.querySelectorAll) root.querySelectorAll('select').forEach(skinSelect); }
 function toggleMenu(ev, id){
   ev && ev.stopPropagation();
   const m = document.getElementById(id);
@@ -4949,7 +5012,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.10</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.11</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -8489,6 +8552,9 @@ function togglePropsMenu(btn){
     <div class="fm-row fm-chk"><span>禁止重复值</span><input type="checkbox" id="menu-uniq"${uniqVal?' checked':''}></div>
     <div class="fm-row fm-chk"><span>隐藏字段</span><input type="checkbox" id="menu-hid"${hidVal?' checked':''}></div>`;
   document.body.appendChild(menu);
+  // 菜单里的原生 <select>（符号 / 小数位 / 负数格式）换成**自绘下拉**，
+  // 否则在浅色模式下弹出来的还是系统的深色列表 ✗
+  skinSelectsIn(menu);
   placeMenuNear(menu, btn, -80);
   menu._opening = true;
   setTimeout(()=>{ menu._opening = false; }, 300);
