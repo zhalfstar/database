@@ -152,7 +152,7 @@ nav{padding:4px 10px}
 #storage-bar.hot{background:var(--danger)}
 /* ===== 全局搜索 ===== */
 .top-searches{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
-.gresults{position:absolute;top:calc(100% + 6px);right:0;width:330px;max-width:calc(100vw - 16px);max-height:62vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 10px 28px rgba(15,23,42,.16);z-index:60;padding:6px;display:none}
+.gresults{position:absolute;top:calc(100% + 6px);right:0;width:330px;max-width:calc(100vw - 16px);max-height:62vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 10px 28px rgba(15,23,42,.16);z-index:60;padding:6px;display:none;animation:menuPop .16s ease}
 .gr-item{display:block;padding:8px 10px;border-radius:8px;color:var(--text);cursor:pointer}
 .gr-item:hover{background:var(--panel2)}
 .gr-tname{display:block;font-size:11px;color:var(--muted)}
@@ -266,7 +266,7 @@ body.table-page-body{overflow:hidden}
   #view.table-page .back{font-size:12px}
 }
 .bar-menu-wrap{position:relative}
-.bar-menu{position:absolute;right:0;bottom:calc(100% + 6px);background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 30px rgba(15,23,42,.12);padding:6px;display:flex;flex-direction:column;min-width:178px;z-index:40}
+.bar-menu{position:absolute;right:0;bottom:calc(100% + 6px);background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 30px rgba(15,23,42,.12);padding:6px;display:flex;flex-direction:column;min-width:178px;z-index:40;animation:menuPop .16s ease}
 .bar-menu button{display:flex;align-items:center;gap:8px;background:none;border:none;padding:9px 12px;font-size:13px;color:var(--text);cursor:pointer;border-radius:8px;text-align:left;font-family:inherit;white-space:nowrap}
 .bar-menu button:hover{background:var(--panel2)}
 table.grid{width:100%;border-collapse:collapse;table-layout:auto}
@@ -275,7 +275,7 @@ table.grid.fixed td{overflow:hidden;text-overflow:ellipsis}
 table.grid th,table.grid td{padding:9px 12px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);font-size:13px;vertical-align:middle;text-align:left;white-space:nowrap;height:var(--rowH,auto)}
 table.grid td{position:relative}
 table.grid .g-num{position:absolute;top:0;right:0;font-size:9px;line-height:1;min-width:11px;text-align:center;padding:1px 2px;background:#3a3f47;color:#fff;border-radius:0 0 0 3px;pointer-events:auto;cursor:pointer}
-#group-panel{position:fixed;z-index:999;min-width:150px;max-width:260px;max-height:none;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.14);padding:10px 12px;font-size:13px;color:var(--text)}
+#group-panel{position:fixed;z-index:999;min-width:150px;max-width:260px;max-height:none;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.14);padding:10px 12px;font-size:13px;color:var(--text);animation:menuPop .16s ease}
 #group-panel .gp-title{font-weight:600;margin-bottom:8px;color:var(--text)}
 #group-panel .gp-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 0}
 #group-panel .gp-name{flex:1;cursor:pointer;padding:5px 6px;border-radius:6px;color:var(--text)}
@@ -311,7 +311,7 @@ table.grid tr.link-picked td{background:rgba(66,133,244,.16)}
 table.grid tr.link-rel td{background:rgba(66,133,244,.14);border-top:1px solid #4285F4;border-bottom:1px solid #4285F4}
 table.grid tr.link-rel td.no-cell{box-shadow:inset 4px 0 0 #4285F4}
 table.grid tr.hit td{background:rgba(232,163,61,.10)}
-#link-mode-bar{position:fixed;top:8px;left:8px;width:min(92vw,420px);z-index:70;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 24px rgba(15,23,42,.15);padding:10px 12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;overflow:auto;touch-action:none;cursor:grab}
+#link-mode-bar{position:fixed;top:8px;left:8px;width:min(92vw,420px);z-index:70;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 24px rgba(15,23,42,.15);padding:10px 12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;overflow:auto;touch-action:none;cursor:grab;animation:menuPop .16s ease}
 #link-mode-bar:active{cursor:grabbing}
 .gp-name.gp-x{color:#1f6feb;background:rgba(31,111,235,.08);border-radius:6px;padding:1px 6px;font-weight:600}
 tr.flash-row{animation:rowFlash 1.9s ease}
@@ -355,7 +355,7 @@ tr.hit-row>td:first-child{box-shadow:inset 3px 0 0 #4285F4}
 .submenu-wrap{position:relative}
 .submenu-wrap.show .submenu{display:block}
 .submenu-trigger{width:100%;text-align:left}
-.submenu{position:absolute;left:100%;top:0;min-width:160px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:99;padding:4px}
+.submenu{position:absolute;left:100%;top:0;min-width:160px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:99;padding:4px;animation:menuPop .16s ease}
 @media (max-width: 600px), (max-height:520px){
   /* 横屏也算「窄」：.submenu 默认从按钮右侧弹出（left:100%），矮屏/贴右边缘时整个飞到屏幕外 ✗ */
   .submenu{position:fixed !important;left:50% !important;top:50% !important;transform:translate(-50%,-50%) !important;width:80vw;max-width:300px}
@@ -393,8 +393,8 @@ th.sorted{color:var(--accent-hi)}
 .fm-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12.5px;color:var(--text)}
 .fm-stats-grid span{display:flex;justify-content:space-between}
 .fm-stats-grid b{color:var(--accent)}
-#field-menu{position:fixed;z-index:300;width:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.14);padding:10px 12px;display:none}
-#ov-menu{position:fixed;z-index:3000;min-width:190px;max-width:min(300px,88vw);background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.14);padding:6px 0;font-size:13px}
+#field-menu{position:fixed;z-index:300;width:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.14);padding:10px 12px;display:none;animation:menuPop .16s ease}
+#ov-menu{position:fixed;z-index:3000;min-width:190px;max-width:min(300px,88vw);background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(15,30,60,.14);padding:6px 0;font-size:13px;animation:menuPop .16s ease}
 .ovm-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 14px;cursor:pointer;color:var(--text);border-radius:7px;white-space:nowrap}
 .ovm-row:hover{background:var(--panel2)}
 .ovm-row.ovm-back{color:var(--muted);font-size:12.5px}
@@ -493,7 +493,7 @@ td.num,th.num{text-align:right}
 .tp-btn{display:flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:8px;padding:7px 10px;background:var(--bg);font-size:13px;cursor:pointer}
 .tp-ic{display:inline-flex;color:var(--muted)}
 .tp-ic svg{width:16px;height:16px}
-.tp-pop{position:absolute;top:calc(100% + 4px);left:0;min-width:170px;max-height:280px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:60;display:none;padding:4px}
+.tp-pop{position:absolute;top:calc(100% + 4px);left:0;min-width:170px;max-height:280px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:60;display:none;padding:4px;animation:menuPop .16s ease}
 .tp-pop.show{display:block}
 .tp-opt{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;justify-content:space-between}
 .tp-opt:hover,.tp-opt.sel{background:var(--line)}
@@ -644,7 +644,7 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
 .last-rec-body{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;line-height:1.6}
 .last-rec-body b{font-weight:600}
 .last-rec-body .last-rec-val{color:var(--danger-hi);font-style:normal;font-weight:600}
-.last-rec-pop{position:fixed;z-index:2000;width:min(330px,88vw);max-height:46vh;overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 32px rgba(15,23,42,.22);font-size:13px;user-select:none;-webkit-user-select:none}
+.last-rec-pop{position:fixed;z-index:2000;width:min(330px,88vw);max-height:46vh;overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 32px rgba(15,23,42,.22);font-size:13px;user-select:none;-webkit-user-select:none;animation:menuPop .16s ease}
 .last-rec-pop-title{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background:var(--hl);border-bottom:1px solid var(--line2);font-size:12.5px;font-weight:600;color:var(--muted);cursor:move;touch-action:none;user-select:none;z-index:1}
 .last-rec-pop-title b{color:var(--text)}
 .last-rec-pop-close{border:0;background:none;padding:9px 11px;margin:-7px -9px -7px 0;cursor:pointer;color:var(--muted);font-size:14px;line-height:1;flex-shrink:0;border-radius:8px}
@@ -653,6 +653,10 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
 .last-rec-pop .last-rec-body b{font-weight:600;color:var(--text)}
 .confirm-body{font-size:13.5px;padding:10px 2px;line-height:1.7}
 @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+/* 浮层出现动画（统一一套）。弹窗(.modal/.toast)一直有 pop；
+   字段设置/列操作/页签菜单、概览长按菜单、更多菜单、子菜单、类型选择、上次记录、
+   关联面板、分组面板、搜索结果… 这些浮层以前是"啪"地直接出现，现在都用同一套动画 ✓ */
+@keyframes menuPop{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
 
 /* ===== Toast ===== */
 #toast-root{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
@@ -707,7 +711,10 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
    这里统一按**高度**收口：竖向能省就省，保证侧边栏底部的「数据占用」和各类弹窗都完整可见可点。 */
 @media (max-height:520px){
   .side-brand{padding:9px 14px 7px}
-  #table-list{min-height:56px}
+  /* 矮屏下**必须**让列表让位：设 min-height:56px 时，列表+底栏加起来会超出侧边栏高度，
+     侧边栏虽然能滚，但底栏（含「数据占用」进度条）会被顶到视口外、默认看不见 ✗。
+     改成 0 让列表把空间让给底栏，底栏永远完整可见 ✓（列表自己仍可滚）。 */
+  #table-list{min-height:0}
   /* 底栏排成两列：4 个按钮走 2×2，比竖排省约 80px —— 这样「数据占用」一栏在横屏也露得出来 */
   .side-bottom{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px}
   .side-theme{grid-column:1 / -1}
@@ -739,11 +746,10 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
   #sidebar{
     width:calc(262px + var(--sai-l) + var(--sai-r));
     padding-left:var(--sai-l);padding-right:var(--sai-r);
+    /* 底部安全区加在 #sidebar 上（**不要**改 .side-bottom 的 padding-bottom ✗ ——
+       那条会连横屏媒体查询里写的 padding:8px 一起盖掉，底栏内容被抬高一大截）。 */
+    padding-bottom:var(--sai-b);
   }
-  /* 让「小白条安全区」落在底栏自己身上，而不是 #sidebar ——
-     #sidebar 是 flex 容器，padding-bottom 会被 #table-list 的 flex:1 吃掉一部分；
-     加到 .side-bottom 上才能保证「清空数据 / 数据占用 / 撤销记录」整块抬到 home indicator 之上。 */
-  .side-bottom{padding-bottom:calc(12px + var(--sai-b))}
   .overlay{
     padding-left:calc(16px + var(--sai-l));padding-right:calc(16px + var(--sai-r));
     padding-bottom:calc(12px + var(--sai-b));
@@ -1334,7 +1340,9 @@ function makeFloat(el, key, opts){
   const handleSel = opts.handle || null;
   // opts.dragFromLabels：默认排除 <label>（避免和"整行都是 label"的可滚动列表抢手势）。
   // 记录表单的字段区整块都是拖动把手时才需要放行 label。
-  const exCls = [(opts.dragFromLabels ? '' : 'label'), (opts.exclude||''),'button','input','select','textarea','a','.res-handle','.res-edge-r','.res-edge-b','.g-num','.vline','.row-resizer','.lp-unlink','.lp-unlink-all','.gp-del','.gp-dissolve','.gp-addlink','.gp-name','.gp-close','.tp-opt','.tp-pop','.fr-handle'].filter(Boolean).join(',');
+  // 注意 .fr-drag-handle 必须在排除表里：字段行的小手柄是**字段排序**的把手，
+  // 不能让它同时触发"整窗拖动"（否则拖手柄时弹窗跟着动、字段顺序反而换不了）✗
+  const exCls = [(opts.dragFromLabels ? '' : 'label'), (opts.exclude||''),'button','input','select','textarea','a','.res-handle','.res-edge-r','.res-edge-b','.g-num','.vline','.row-resizer','.lp-unlink','.lp-unlink-all','.gp-del','.gp-dissolve','.gp-addlink','.gp-name','.gp-close','.tp-opt','.tp-pop','.fr-handle','.fr-drag-handle'].filter(Boolean).join(',');
   el.addEventListener('pointerdown', e=>{
     if(e.target.closest(exCls)) return;
     if(handleSel && !e.target.closest(handleSel)) return;
