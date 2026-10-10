@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-10.5</title>
+<title>轻量数据库 · v2026-10-10.6</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -261,7 +261,7 @@ nav{padding:4px 10px}
   input,select,textarea{font-size:16px}
 }
 body.table-page-body{overflow:hidden}
-#view.table-page{display:flex;flex-direction:column;height:calc(100vh - 52px);height:calc(100dvh - 52px);max-width:none;padding:0 12px}
+#view.table-page{display:flex;flex-direction:column;height:calc(100vh - 52px);height:calc(100dvh - 52px);max-width:none;padding:0 12px 6px}
 #view.table-page .grid-wrap{flex:1;min-height:0;display:flex;flex-direction:column;border-radius:0 0 var(--radius) var(--radius)}
 #view.table-page .table-scroll{flex:1;min-height:0;max-height:none}
 #view.table-page .table-bar{position:static;margin-top:0;padding:8px 2px;flex-wrap:nowrap}
@@ -362,16 +362,16 @@ tr.hit-row>td:first-child{box-shadow:inset 3px 0 0 #4285F4}
 #link-panel button svg.ic{flex:none;width:15px;height:15px}
 .drag-sort{opacity:.5;box-shadow:0 6px 16px rgba(15,23,42,.16)}
 .smart-box{position:relative;border:1px solid var(--line2);border-radius:10px;padding:8px;background:var(--panel2)}
-.submenu-wrap{position:relative;display:flex;flex-direction:column}
+.submenu-wrap{position:relative}
 .submenu-wrap.show .submenu{display:block}
 .submenu-trigger{width:100%;text-align:left}
 .submenu{position:absolute;left:100%;top:0;min-width:160px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:99;padding:4px;animation:menuPop .16s ease}
-/* 子菜单**就在原菜单里就地展开**（手风琴式），不再做"向右飞出的浮层" ——
-   飞出式有两个致命问题：① 菜单靠右时子菜单飞出屏幕；② 窄屏/矮屏被下面的媒体查询强制居中，
-   **正好压在上一级菜单上面**，用户既点不到上一级、也点不到子菜单 ✗。
-   就地展开则永远不重叠、永远在屏幕内 ✓ */
-.submenu{position:static;min-width:0;width:auto;margin:2px 0 3px 8px;padding:2px 0 2px 8px;
-  border-left:2px solid var(--line2);border-radius:0;background:transparent;box-shadow:none;z-index:auto;
+/* 子菜单是一个**独立小浮层**：默认贴在主菜单旁边（主菜单靠右 → 放它左侧），
+   并且**可以用手指/鼠标拖着走**（用户要求）。
+   用 position:fixed 让它脱离主菜单的 overflow 裁剪，不会被菜单的滚动条切掉 ✓ */
+.submenu{position:fixed;z-index:1200;width:max-content;min-width:150px;max-width:calc(100vw - 16px);
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,.18);padding:4px;touch-action:none;cursor:move;
   animation:menuPop .16s ease}
 .submenu button{display:flex;align-items:center;gap:6px;width:100%;padding:8px 10px;border:none;background:none;text-align:left;font-size:13px;cursor:pointer;border-radius:6px;color:var(--text)}
 .submenu button:hover{background:var(--bg)}
@@ -862,7 +862,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.5">v2026-10-10.5</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.6">v2026-10-10.6</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -3586,7 +3586,13 @@ function toggleMenu(ev, id){
   if(om) om.style.display = 'none';
   m.style.display = (m.style.display==='none' || !m.style.display) ? 'block' : 'none';
 }
-function closeMenu(id){ const m = document.getElementById(id); if(m) m.style.display='none'; }
+function closeMenu(id){
+  const m = document.getElementById(id); if(m) m.style.display='none';
+  // 子菜单可能被临时挂到了 <body> 下（为了避开菜单动画的 transform 影响 fixed 定位），
+  // 关菜单时要一并收掉，否则会在 body 里越积越多
+  document.querySelectorAll('.submenu').forEach(s=>{ s.style.display='none'; });
+  document.querySelectorAll('body > .submenu').forEach(s=>s.remove());
+}
 function scrollGridTo(pos){
   const sc = document.querySelector('#grid .table-scroll');
   if(!sc) return;
@@ -3678,28 +3684,110 @@ function doImportRecords(tableId){
   t.updatedAt = Date.now(); save(); renderTable(t); closeModal();
   toast(skipped ? `已从「${s.name}」导入 ${n} 条，跳过 ${skipped} 条（${[...new Set(reasons)].slice(0,3).join('、')}${new Set(reasons).size>3?' 等':''}）` : `已从「${s.name}」导入 ${n} 条记录并合并`);
 }
+/* 让一个小浮层能用手/鼠标拖着走（不做尺寸记忆，纯拖动）。
+   关键点和 makeFloat 一样：**pointerdown 那一帧就把 touch-action 设成 none** ——
+   等"移动超过 4px"再设已经晚了，浏览器早把这次触摸判成"滚动内容区"，
+   之后的 pointermove 会被节流甚至不再派发，表现就是"拖不动 / 一顿一顿" ✗ */
+function makeDraggable(el, opts){
+  opts = opts || {};
+  const exclude = opts.exclude || 'button,input,select,textarea,a';
+  if(el._dragBound) return; el._dragBound = true;
+  el.addEventListener('pointerdown', e=>{
+    if(e.button !== 0 && e.button !== undefined) return;
+    if(e.target.closest(exclude)) return;
+    const sx = e.clientX, sy = e.clientY;
+    const vv0 = window.visualViewport;
+    const vOffL = (vv0 && vv0.offsetLeft) || 0, vOffT = (vv0 && vv0.offsetTop) || 0;
+    const r = el.getBoundingClientRect();
+    const sL = parseFloat(el.style.left), sT = parseFloat(el.style.top);
+    const ox = isFinite(sL) ? sL : r.left + vOffL;
+    const oy = isFinite(sT) ? sT : r.top + vOffT;
+    const prevTA = el.style.touchAction;
+    el.style.touchAction = 'none';
+    let moved = false, done = false;
+    const move = ev=>{
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      if(Math.abs(dx) + Math.abs(dy) > 4) moved = true;
+      if(!moved) return;
+      const vv = window.visualViewport;
+      const vL = (vv && vv.offsetLeft) || 0, vT = (vv && vv.offsetTop) || 0;
+      const vW = (vv && vv.width) || window.innerWidth;
+      const vH = (vv && vv.height) || window.innerHeight;
+      const keep = 40;   // 只保证至少 40px 留在可视区内，不整块夹取
+      const minL = vL + 4, maxL = Math.max(minL, vL + vW - keep);
+      const minT = vT + 4, maxT = Math.max(minT, vT + vH - keep);
+      el.style.left = Math.max(minL, Math.min(maxL, ox + dx))+'px';
+      el.style.top  = Math.max(minT, Math.min(maxT, oy + dy))+'px';
+    };
+    const up = ()=>{
+      if(done) return; done = true;
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      el.style.touchAction = prevTA;      // 恢复原值，别一律写 '' ✗
+      if(moved) el._dragMovedAt = Date.now();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  });
+  // 拖完 250ms 内的 click 不要当成"点了菜单项"，否则一松手就误触 ✗
+  el.addEventListener('click', e=>{
+    if(el._dragMovedAt && Date.now() - el._dragMovedAt < 250){ e.stopPropagation(); e.preventDefault(); }
+  }, true);
+}
+/* 取元素在视口里的「布局盒子」——**不受 transform 影响**。
+   为什么不直接用 getBoundingClientRect()：菜单/子菜单出现时都在播 menuPop 动画，
+   keyframes 里有 transform:scale(.97) translateY(6px)，动画期间 rect 拿到的是**缩放后**的尺寸
+   （实测 330px 的菜单被量成 320px），拿它算位置就会偏 ✗。
+   offsetWidth/offsetHeight 是布局尺寸，永远不受 transform 影响，配合 offsetParent 的 rect 就是准的。 */
+function offsetBox(el){
+  const w = el.offsetWidth, h = el.offsetHeight;
+  const op = el.offsetParent;
+  if(!op){ const r = el.getBoundingClientRect(); return { left:r.left, top:r.top, right:r.left+w, bottom:r.top+h, width:w, height:h }; }
+  const or = op.getBoundingClientRect();
+  const left = or.left + el.offsetLeft, top = or.top + el.offsetTop;
+  return { left, top, right:left+w, bottom:top+h, width:w, height:h };
+}
 function toggleSubmenu(btn){
-  const sub = btn.nextElementSibling;
+  let sub = btn._sub;
+  if(!sub){ sub = btn.nextElementSibling; if(sub) btn._sub = sub; }
   if(!sub) return;
   const willShow = sub.style.display === 'none' || !sub.style.display;
   // 关掉其它已展开的子菜单（一次只开一个）
   document.querySelectorAll('.submenu').forEach(x=>{ if(x!==sub) x.style.display='none'; });
   if(!willShow){ sub.style.display='none'; return; }
-  // 就地展开，不需要任何定位计算（飞出式会飞出屏幕 / 盖住上一级菜单 ✗）
-  sub.style.display='block';
-  // 矮屏下菜单有 max-height + overflow-y:auto，展开的子菜单可能落在可视区外 →
-  // 主动把它滚进可视区，保证"点了就能看到、就能点"
-  try{ sub.scrollIntoView({block:'nearest'}); }catch(e){}
-  // 展开后菜单可能超出视口底部 → 把菜单整体往上挪一点
-  const menu = btn.closest('.bar-menu');
-  if(menu){
-    const mr = menu.getBoundingClientRect();
-    if(mr.bottom > window.innerHeight - 6){
-      const cur = parseFloat(getComputedStyle(menu).bottom) || 0;
-      menu.style.bottom = (cur + (mr.bottom - (window.innerHeight - 6))) + 'px';
-      try{ sub.scrollIntoView({block:'nearest'}); }catch(e){}
-    }
+  // 挂到 <body> 下：主菜单有开场动画（动画里的 transform 会让 fixed 后代相对**菜单**定位
+  // 而不是视口）→ 位置会算错 ✗。放到 body 下就永远相对视口，稳。
+  if(sub.parentElement !== document.body){
+    document.querySelectorAll('body > .submenu').forEach(x=>{ if(x!==sub) x.remove(); });
+    document.body.appendChild(sub);
   }
+  sub.style.display='block';
+  sub.style.position='fixed';
+  sub.style.left='0px'; sub.style.top='0px';   // 先归零再量，位置不影响尺寸
+  const sw = sub.offsetWidth || 170, sh = sub.offsetHeight || 160;
+  const menu = btn.closest('.bar-menu') || btn.closest('.ov-menu');
+  // 用布局盒子（不受动画 transform 影响），别用 getBoundingClientRect ✗
+  const mr = menu ? offsetBox(menu) : offsetBox(btn);
+  const tr = offsetBox(btn);
+  const vw = window.innerWidth, vh = window.innerHeight, PAD = 6, GAP = 8;
+  let left, top;
+  if(mr.left - GAP - sw >= PAD){                 // ① 放主菜单**左侧**（主菜单贴右边时最常用）
+    left = mr.left - GAP - sw; top = tr.top;
+  }else if(mr.right + GAP + sw <= vw - PAD){     // ② 左侧不够 → 放右侧
+    left = mr.right + GAP; top = tr.top;
+  }else{                                         // ③ 窄屏左右都放不下 → 放到主菜单上方/下方
+    left = Math.min(Math.max(PAD, mr.left), Math.max(PAD, vw - sw - PAD));
+    if(mr.top - GAP - sh >= PAD) top = mr.top - GAP - sh;
+    else if(mr.bottom + GAP + sh <= vh - PAD) top = mr.bottom + GAP;
+    else top = vh - sh - PAD;
+  }
+  left = Math.min(Math.max(PAD, left), Math.max(PAD, vw - sw - PAD));
+  top  = Math.min(Math.max(PAD, top),  Math.max(PAD, vh - sh - PAD));
+  sub.style.left = Math.round(left) + 'px';
+  sub.style.top  = Math.round(top) + 'px';
+  makeDraggable(sub);      // 可拖动：拖完就停在用户放的位置
 }
 let previewScale = 1;
 /* 把「条件格式 → 手动行样式 → 列样式 → 单元格样式」合成为一段 CSS 文本。
@@ -4833,7 +4921,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.5</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.6</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -8261,9 +8349,13 @@ function clearOptionsFromDialog(btn){
   }, '清除', true);
 }
 function togglePropsMenu(btn){
+  const row0 = btn.closest('.field-row');
+  if(!row0) return;
+  // 再点同一个铅笔 → 把菜单收起来（用户要求：点一下开，再点一下收）
+  const opened = document.getElementById('field-menu');
+  if(opened && opened._row === row0){ closeFieldMenu(); return; }
   closeFieldMenu();
-  const row = btn.closest('.field-row');
-  if(!row) return;
+  const row = row0;
   const reqInput = row.querySelector('.f-required');
   const reqVal = reqInput && reqInput.value === '1';
   const hidInput = row.querySelector('.f-hidden');
@@ -8299,6 +8391,7 @@ function togglePropsMenu(btn){
   const fxRow = isFormula ? `<div class="fm-row"><button type="button" class="btn sm" id="menu-fx-edit" style="width:100%">✎ 编辑公式</button></div>` : '';
   const menu = document.createElement('div');
   menu.id = 'field-menu';
+  menu._row = row;   // 记住是给哪一行开的，再点同一行的铅笔就收起
   menu.innerHTML = `<div class="fm-title">${isFormula ? '公式字段设置' : '字段设置'}</div>
     <div class="fm-row"><input type="checkbox" id="menu-req"${reqVal?' checked':''}><span>必填</span></div>
     ${multiRow}
