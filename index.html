@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-10.4</title>
+<title>轻量数据库 · v2026-10-10.5</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -362,15 +362,18 @@ tr.hit-row>td:first-child{box-shadow:inset 3px 0 0 #4285F4}
 #link-panel button svg.ic{flex:none;width:15px;height:15px}
 .drag-sort{opacity:.5;box-shadow:0 6px 16px rgba(15,23,42,.16)}
 .smart-box{position:relative;border:1px solid var(--line2);border-radius:10px;padding:8px;background:var(--panel2)}
-.submenu-wrap{position:relative}
+.submenu-wrap{position:relative;display:flex;flex-direction:column}
 .submenu-wrap.show .submenu{display:block}
 .submenu-trigger{width:100%;text-align:left}
 .submenu{position:absolute;left:100%;top:0;min-width:160px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:99;padding:4px;animation:menuPop .16s ease}
-@media (max-width: 600px), (max-height:520px){
-  /* 横屏也算「窄」：.submenu 默认从按钮右侧弹出（left:100%），矮屏/贴右边缘时整个飞到屏幕外 ✗ */
-  .submenu{position:fixed !important;left:50% !important;top:50% !important;transform:translate(-50%,-50%) !important;width:80vw;max-width:300px}
-}
-.submenu button{display:flex;align-items:center;gap:6px;width:100%;padding:8px 10px;border:none;background:none;text-align:left;font-size:13px;cursor:pointer;border-radius:6px}
+/* 子菜单**就在原菜单里就地展开**（手风琴式），不再做"向右飞出的浮层" ——
+   飞出式有两个致命问题：① 菜单靠右时子菜单飞出屏幕；② 窄屏/矮屏被下面的媒体查询强制居中，
+   **正好压在上一级菜单上面**，用户既点不到上一级、也点不到子菜单 ✗。
+   就地展开则永远不重叠、永远在屏幕内 ✓ */
+.submenu{position:static;min-width:0;width:auto;margin:2px 0 3px 8px;padding:2px 0 2px 8px;
+  border-left:2px solid var(--line2);border-radius:0;background:transparent;box-shadow:none;z-index:auto;
+  animation:menuPop .16s ease}
+.submenu button{display:flex;align-items:center;gap:6px;width:100%;padding:8px 10px;border:none;background:none;text-align:left;font-size:13px;cursor:pointer;border-radius:6px;color:var(--text)}
 .submenu button:hover{background:var(--bg)}
 .smart-input{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;min-height:52px;background:var(--panel);color:var(--text)}
 /* 「清空」后旧文字还留在 textarea 里（写值会打断 iOS 听写），用这层把它盖住：
@@ -764,8 +767,9 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
     padding-left:calc(16px + var(--sai-l));padding-right:calc(16px + var(--sai-r));
     padding-bottom:calc(12px + var(--sai-b));
   }
-  /* 表格页底栏贴底，横屏时会压在 home indicator 上 */
-  #view.table-page{padding-bottom:var(--sai-b)}
+  /* 表格页底栏**贴底**显示（用户要求：和最早期版本一致）。
+     注意不要在这里加 padding-bottom:var(--sai-b) ✗ —— 那会把「新建记录/更多/定位」整条
+     往上顶 21~34px，看起来就是"底部一行往上移"。底栏背景本来就会铺到屏幕最底。 */
   /* 弹窗自己按视口算位置，也要把刘海那侧让出来 */
   #last-rec-pop{max-width:calc(100vw - var(--sai-l) - var(--sai-r) - 16px)}
 }
@@ -858,7 +862,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.4">v2026-10-10.4</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.5">v2026-10-10.5</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -3678,26 +3682,23 @@ function toggleSubmenu(btn){
   const sub = btn.nextElementSibling;
   if(!sub) return;
   const willShow = sub.style.display === 'none' || !sub.style.display;
-  // close all other submenus
+  // 关掉其它已展开的子菜单（一次只开一个）
   document.querySelectorAll('.submenu').forEach(x=>{ if(x!==sub) x.style.display='none'; });
   if(!willShow){ sub.style.display='none'; return; }
+  // 就地展开，不需要任何定位计算（飞出式会飞出屏幕 / 盖住上一级菜单 ✗）
   sub.style.display='block';
-  // auto position: if overflow right, put on left
-  const r = btn.getBoundingClientRect();
-  const sw = sub.offsetWidth || 180;
-  if(r.left + btn.offsetWidth + sw > window.innerWidth - 4){
-    sub.style.left = 'auto';
-    sub.style.right = '100%';
-  }else{
-    sub.style.left = '100%';
-    sub.style.right = 'auto';
-  }
-  // vertical clamp
-  const sr = sub.getBoundingClientRect();
-  if(sr.bottom > window.innerHeight - 4){
-    sub.style.top = (window.innerHeight - sr.height - r.top - 4)+'px';
-  }else{
-    sub.style.top = '0px';
+  // 矮屏下菜单有 max-height + overflow-y:auto，展开的子菜单可能落在可视区外 →
+  // 主动把它滚进可视区，保证"点了就能看到、就能点"
+  try{ sub.scrollIntoView({block:'nearest'}); }catch(e){}
+  // 展开后菜单可能超出视口底部 → 把菜单整体往上挪一点
+  const menu = btn.closest('.bar-menu');
+  if(menu){
+    const mr = menu.getBoundingClientRect();
+    if(mr.bottom > window.innerHeight - 6){
+      const cur = parseFloat(getComputedStyle(menu).bottom) || 0;
+      menu.style.bottom = (cur + (mr.bottom - (window.innerHeight - 6))) + 'px';
+      try{ sub.scrollIntoView({block:'nearest'}); }catch(e){}
+    }
   }
 }
 let previewScale = 1;
@@ -4832,7 +4833,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.4</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.5</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
