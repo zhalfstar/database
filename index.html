@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-10.9</title>
+<title>轻量数据库 · v2026-10-10.10</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -117,7 +117,7 @@ nav{padding:4px 10px}
 /* 「外观」这一行要和下面四个按钮（.side-act）长得一样：同样的外框、圆角、内边距、悬停底色 */
 .side-theme{display:flex;align-items:center;gap:9px;background:transparent;border:1px solid var(--line2);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12.5px;transition:background .15s}
 .side-theme:hover{background:var(--panel2)}
-.side-theme > span{flex:none;color:var(--text)}
+.side-theme > span{flex:none;color:var(--text);width:4em;text-align:justify;text-align-last:justify}
 /* 外观选择器用**自绘弹层**，不用原生 <select> ——
    原生下拉的弹出列表由系统/浏览器渲染，深色模式下会是一块灰白底，和应用主题对不上 ✗。
    自绘的用主题变量，明暗都对 ✓ */
@@ -664,12 +664,19 @@ select.in{background:var(--bg);color:var(--text);border:1px solid var(--line2);b
 .last-rec-body{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;line-height:1.6}
 .last-rec-body b{font-weight:600}
 .last-rec-body .last-rec-val{color:var(--danger-hi);font-style:normal;font-weight:600}
-.last-rec-pop{position:fixed;z-index:2000;width:min(330px,88vw);max-height:46vh;overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 32px rgba(15,23,42,.22);font-size:13px;user-select:none;-webkit-user-select:none;animation:menuPop .16s ease}
-.last-rec-pop-title{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background:var(--hl);border-bottom:1px solid var(--line2);font-size:12.5px;font-weight:600;color:var(--muted);cursor:move;touch-action:none;user-select:none;z-index:1}
+.last-rec-pop{position:fixed;z-index:2000;width:min(330px,88vw);max-height:46vh;display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 10px 32px rgba(15,23,42,.22);font-size:13px;user-select:none;-webkit-user-select:none;animation:menuPop .16s ease}
+/* 右下角的缩放把手 —— 用户要求「上次记录弹窗大小可以调整」。
+   注意：滚动条必须在内层 .last-rec-body 上，不能留在 .last-rec-pop 上 ——
+   否则 absolute 定位的把手会跟着内容一起滚走 ✗ */
+.last-rec-grip{position:absolute;right:0;bottom:0;width:20px;height:20px;cursor:nwse-resize;touch-action:none;z-index:3;opacity:.5;
+  background:linear-gradient(135deg, transparent 0 48%, var(--muted) 48% 100%);
+  border-bottom-right-radius:11px}
+.last-rec-grip:hover,.last-rec-grip:active{opacity:1}
+.last-rec-pop-title{position:sticky;top:0;flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;background:var(--hl);border-bottom:1px solid var(--line2);font-size:12.5px;font-weight:600;color:var(--muted);cursor:move;touch-action:none;user-select:none;z-index:1}
 .last-rec-pop-title b{color:var(--text)}
 .last-rec-pop-close{border:0;background:none;padding:9px 11px;margin:-7px -9px -7px 0;cursor:pointer;color:var(--muted);font-size:14px;line-height:1;flex-shrink:0;border-radius:8px}
 .last-rec-pop-close:active{background:var(--panel2);color:var(--text)}
-.last-rec-pop .last-rec-body{display:flex;flex-wrap:wrap;gap:4px 12px;padding:10px 12px;line-height:1.6;cursor:pointer}
+.last-rec-pop .last-rec-body{flex:1 1 auto;min-height:0;overflow:auto;display:flex;flex-wrap:wrap;gap:4px 12px;padding:10px 12px;line-height:1.6;cursor:pointer}
 .last-rec-pop .last-rec-body b{font-weight:600;color:var(--text)}
 .confirm-body{font-size:13.5px;padding:10px 2px;line-height:1.7}
 @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
@@ -872,7 +879,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.9">v2026-10-10.9</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.10">v2026-10-10.10</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -1222,7 +1229,7 @@ function evictRegenerableStorage(){
   let freed = 0;
   const tryDrop = k => { try{ const v = localStorage.getItem(k); if(v){ freed += new Blob([v]).size; localStorage.removeItem(k); } }catch(e){} };
   tryDrop(LS_KEY+'-history');                                  // 撤销记录：最先丢
-  ['-table-query','-ov-prefs','-collapsed-folders','-menu-order','-lp-order'].forEach(s=>tryDrop(LS_KEY+s));
+  ['-table-query','-ov-prefs','-collapsed-folders','-menu-order','-lp-order','-lastrec-size'].forEach(s=>tryDrop(LS_KEY+s));
   return freed;
 }
 // 侧边栏「存储占用」里的「清理」：手动丢掉撤销记录换空间（数据不受影响）
@@ -1668,7 +1675,18 @@ function openThemeMenu(btn){
     `<button type="button" role="menuitem" class="theme-opt${v===cur?' on':''}" onclick="setThemeMode('${v}');closeThemeMenu()">`+
     `<span class="theme-check">${v===cur?'✓':''}</span>${THEME_LABELS[v]}</button>`).join('');
   document.body.appendChild(menu);
-  placeMenuNear(menu, btn, -40);
+  // **右边缘和「外观」那一行（胶囊）的右边对齐**（用户要求）；
+  // 上下优先放在那一行上方（它在侧边栏底部），放不下再翻到下方。
+  const row = btn.closest('.side-theme') || btn;
+  const rr = row.getBoundingClientRect();
+  menu.classList.add('show');                 // 先显形才量得到尺寸
+  const mw = menu.offsetWidth || 150, mh = menu.offsetHeight || 130;
+  let left = rr.right - mw;
+  left = Math.max(8, Math.min(left, Math.max(8, window.innerWidth - mw - 8)));
+  let top = rr.top - mh - 6;
+  if(top < 8) top = Math.max(8, Math.min(window.innerHeight - mh - 8, rr.bottom + 6));
+  menu.style.left = Math.round(left) + 'px';
+  menu.style.top = Math.round(top) + 'px';
   menu._opening = true;
   setTimeout(()=>{ menu._opening = false; }, 300);
 }
@@ -4931,7 +4949,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.9</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.10</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7022,8 +7040,66 @@ function showLastRecPop(t, lastRow){
     return `<span><b>${esc(f.name)}</b> <em class="last-rec-val">${esc(str)}</em></span>`;
   }).filter(Boolean).join('') || '<span class="muted">（该记录内容为空）</span>';
   pop.innerHTML = `<div class="last-rec-pop-title"><span>上次记录 <b>#${lastRow.no!=null?lastRow.no:''}</b> · 点击快速修改</span><button type="button" class="last-rec-pop-close" title="关闭">${svg('i-x')}</button></div>
-    <div class="last-rec-body">${body}</div>`;
+    <div class="last-rec-body">${body}</div>
+    <div class="last-rec-grip" title="拖动调整大小" aria-label="拖动调整大小"></div>`;
   document.body.appendChild(pop);
+  // ===== 大小可调（用户要求）：记住上次拖出来的尺寸 =====
+  const SIZE_KEY = 'lighter-db-lastrec-size';
+  const MINW = 200, MINH = 90;
+  const clampSize = (w, h)=>{
+    const maxW = Math.max(MINW, window.innerWidth - 16);
+    const maxH = Math.max(MINH, window.innerHeight - 16);
+    return { w: Math.max(MINW, Math.min(maxW, Math.round(w))), h: Math.max(MINH, Math.min(maxH, Math.round(h))) };
+  };
+  let savedSize = null;
+  try{ savedSize = JSON.parse(localStorage.getItem(SIZE_KEY)||'null'); }catch(e){}
+  if(savedSize && savedSize.w && savedSize.h){
+    const s = clampSize(savedSize.w, savedSize.h);
+    pop.style.width = s.w + 'px';
+    pop.style.height = s.h + 'px';
+    pop.style.maxHeight = 'none';     // 用户定过尺寸就以他定的为准，别再被 46vh 卡住
+  }
+  const grip = pop.querySelector('.last-rec-grip');
+  if(grip){
+    let gDown = false, gx = 0, gy = 0, gw = 0, gh = 0;
+    grip.addEventListener('pointerdown', e=>{
+      e.stopPropagation();
+      if(e.cancelable) e.preventDefault();
+      pop._downOnGrip = true;          // 别让 pointerup 把它当成"点了内容区→快速修改"
+      gDown = true;
+      const r = pop.getBoundingClientRect();
+      gx = e.clientX; gy = e.clientY; gw = r.width; gh = r.height;
+      pop._dragging = true;            // 缩放期间同样不让键盘锚点逻辑抢位置
+      const prevTA = pop.style.touchAction;
+      pop.style.touchAction = 'none';  // 关键：pointerdown 这一帧就设，否则手势会被判成滚动 ✗
+      try{ grip.setPointerCapture(e.pointerId); }catch(err){}
+      const move = ev=>{
+        if(!gDown) return;
+        const s = clampSize(gw + (ev.clientX - gx), gh + (ev.clientY - gy));
+        pop.style.width = s.w + 'px';
+        pop.style.height = s.h + 'px';
+        pop.style.maxHeight = 'none';
+      };
+      const up = ()=>{
+        if(!gDown) return; gDown = false;
+        pop._dragging = false;
+        pop.style.touchAction = prevTA;
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+        const r = pop.getBoundingClientRect();
+        try{ localStorage.setItem(SIZE_KEY, JSON.stringify({w:Math.round(r.width), h:Math.round(r.height)})); }catch(err){}
+        // 尺寸变了要重算键盘锚点，否则下次弹键盘位置会跳
+        if(window.visualViewport){
+          pop._vvAnchor = (parseFloat(pop.style.top) || r.top) - (window.visualViewport.offsetTop || 0);
+        }
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
+    });
+    grip.addEventListener('click', e=>{ e.stopPropagation(); });
+  }
   // 位置统一按「视觉视口坐标」存取（_lastRecPos 存的是用户看到的屏幕位置）。
   // 之前直接按布局坐标还原，键盘弹出时 offsetTop 已变化，存的是 14 就要放到 14+offsetTop；
   // 直接写 14 会让小窗落到可视区上方（表现就是"保存后上次记录弹窗消失了"）——
@@ -7132,6 +7208,8 @@ function showLastRecPop(t, lastRow){
   // 重定向到 pop 本身，target.closest 判断会失效——所以用按下时记录的目标 + 抬起坐标命中判断
   const upDrag = e=>{
     endPopDrag();
+    // 缩放把手上的手势不算"点击内容区"，否则一松手就会误跳去快速修改 ✗
+    if(pop._downOnGrip){ pop._downOnGrip = false; pop._lastDragged = true; return; }
     const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
     // 关闭按钮的判断必须排在位移阈值之前：手指按在按钮上轻微抖动（很容易超过 8px）
     // 原来会被当成拖动而放弃关闭，这就是"X 时好时坏"的原因。这里放宽到 28px。
