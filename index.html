@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-11.1</title>
+<title>轻量数据库 · v2026-10-11.3</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -363,18 +363,26 @@ tr.hit-row>td:first-child{box-shadow:inset 3px 0 0 #4285F4}
 .drag-sort{opacity:.5;box-shadow:0 6px 16px rgba(15,23,42,.16)}
 .smart-box{position:relative;border:1px solid var(--line2);border-radius:10px;padding:8px;background:var(--panel2)}
 .submenu-wrap{position:relative}
-.submenu-wrap.show .submenu{display:block}
-.submenu-trigger{width:100%;text-align:left}
-.submenu{position:absolute;left:100%;top:0;min-width:160px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:99;padding:4px;animation:menuPop .2s ease}
-/* 子菜单是一个**独立小浮层**：默认贴在主菜单旁边（主菜单靠右 → 放它左侧），
-   并且**可以用手指/鼠标拖着走**（用户要求）。
-   用 position:fixed 让它脱离主菜单的 overflow 裁剪，不会被菜单的滚动条切掉 ✓ */
-.submenu{position:fixed;z-index:1200;width:max-content;min-width:150px;max-width:calc(100vw - 16px);
+.submenu-wrap.open > .submenu-trigger{background:var(--panel2)}
+.submenu-trigger{display:flex;align-items:center;gap:8px;width:100%;text-align:left}
+.submenu-trigger .sub-caret{margin-left:auto;transition:transform .18s ease;flex:none;opacity:.7}
+.submenu-wrap.open > .submenu-trigger .sub-caret{transform:rotate(90deg)}
+/* 子菜单：**留在 .submenu-wrap 里**（关键 —— 挂到 <body> 后就不在 .bar-menu-wrap 内，
+   全局 click 监听会立刻 closeMenu → 把 body>.submenu 从 DOM 拔掉 →
+   真手指点下去时元素已脱离文档，事件丢失 → 表现"点导出没反应" ✗）。
+   为了不被主菜单开场动画的 transform 影响定位，用 position:fixed + offsetBox() 量位置。 */
+.submenu{position:fixed;z-index:1200;box-sizing:border-box;width:max-content;min-width:160px;
+  max-width:calc(100vw - 16px);
   background:var(--panel);border:1px solid var(--line);
-  border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,.18);padding:4px;touch-action:none;cursor:move;
-  animation:menuPop .2s ease}
-.submenu button{display:flex;align-items:center;gap:6px;width:100%;padding:8px 10px;border:none;background:none;text-align:left;font-size:13px;cursor:pointer;border-radius:6px;color:var(--text)}
-.submenu button:hover{background:var(--bg)}
+  border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,.18);padding:4px;
+  overscroll-behavior:contain;
+  animation:subPop .18s cubic-bezier(.34,1.4,.64,1)}
+@keyframes subPop{from{opacity:0;transform:translateX(-6px) scale(.96)}to{opacity:1;transform:none}}
+.submenu button{display:flex;align-items:center;gap:6px;width:100%;padding:9px 10px;border:none;background:none;text-align:left;font-size:13px;cursor:pointer;border-radius:6px;color:var(--text)}
+.submenu button:hover,.submenu button:active{background:var(--panel2)}
+.submenu .sub-grip{display:flex;align-items:center;gap:6px;padding:2px 8px 4px;margin:-2px -4px 3px;
+  border-bottom:1px solid var(--line);font-size:11px;color:var(--muted);cursor:move;touch-action:none}
+.submenu .sub-grip .grip-dots{letter-spacing:1px;font-size:13px;line-height:1}
 .smart-input{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;min-height:52px;background:var(--panel);color:var(--text)}
 /* 「清空」后旧文字还留在 textarea 里（写值会打断 iOS 听写），用这层把它盖住：
    只显示"清空之后新说的内容"，看起来就是已清空、正在重新填。textarea 一个字都不动。 */
@@ -897,7 +905,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-11.1">v2026-10-11.1</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-11.3">v2026-10-11.3</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -3511,8 +3519,9 @@ function renderTable(t){
     condRules: `<button type="button" data-key="condRules" onclick="closeMenu('bar-menu');openCondRules('${t.id}')">${svg('i-format')} 条件格式</button>`,
     groupStats: `<button type="button" data-key="groupStats" onclick="closeMenu('bar-menu');openGroupStats('${t.id}')">${svg('i-db')} 分组统计</button>`,
     preview: `<button type="button" data-key="preview" onclick="openPreview('${t.id}');closeMenu('bar-menu')">${svg('i-eye')} 预览</button>`,
-    ioSub: `<div class="submenu-wrap" data-key="ioSub"><button type="button" class="submenu-trigger" onclick="toggleSubmenu(this)">${svg('i-download')} 导入导出 ▸</button>
+    ioSub: `<div class="submenu-wrap" data-key="ioSub"><button type="button" class="submenu-trigger" onclick="toggleSubmenu(this)">${svg('i-download')} 导入导出 <span class="sub-caret">▸</span></button>
       <div class="submenu" style="display:none">
+        <div class="sub-grip" title="拖动可移动子菜单"><span class="grip-dots">⠿</span> 拖动可移动</div>
         <button type="button" onclick="openImportRecords('${t.id}');closeMenu('bar-menu')">${svg('i-upload')} 导入记录（合并）</button>
         <button type="button" onclick="exportCSV('${t.id}');closeMenu('bar-menu')">${svg('i-download')} 导出 CSV</button>
         <button type="button" onclick="exportTableJSON('${t.id}');closeMenu('bar-menu')">${svg('i-download')} 导出 JSON</button>
@@ -3690,10 +3699,10 @@ function toggleMenu(ev, id){
 }
 function closeMenu(id){
   const m = document.getElementById(id); if(m) m.style.display='none';
-  // 子菜单可能被临时挂到了 <body> 下（为了避开菜单动画的 transform 影响 fixed 定位），
-  // 关菜单时要一并收掉，否则会在 body 里越积越多
+  // 子菜单是 .submenu-wrap 的**常驻子节点**（不再挂到 <body>），只隐藏、**绝不能 remove** ——
+  // 全局 click 监听会在点到子项的同一次冒泡里调到这里，移除 DOM 会让真手指的 click 落空 ✗
   document.querySelectorAll('.submenu').forEach(s=>{ s.style.display='none'; });
-  document.querySelectorAll('body > .submenu').forEach(s=>s.remove());
+  document.querySelectorAll('.submenu-wrap').forEach(w=>w.classList.remove('open'));
 }
 function scrollGridTo(pos){
   const sc = document.querySelector('#grid .table-scroll');
@@ -3793,10 +3802,14 @@ function doImportRecords(tableId){
 function makeDraggable(el, opts){
   opts = opts || {};
   const exclude = opts.exclude || 'button,input,select,textarea,a';
+  const handle = opts.handle ? el.querySelector(opts.handle) : null;
   if(el._dragBound) return; el._dragBound = true;
   el.addEventListener('pointerdown', e=>{
     if(e.button !== 0 && e.button !== undefined) return;
-    if(e.target.closest(exclude)) return;
+    // 给了 handle（如子菜单顶部的拖拽条）就**只能从 handle 起拖** ——
+    // 否则面板本身可拖，用户想点菜单项时手指稍一滑动就被判成拖动 ✗
+    if(handle){ if(!handle.contains(e.target)) return; }
+    else if(e.target.closest(exclude)) return;
     const sx = e.clientX, sy = e.clientY;
     const vv0 = window.visualViewport;
     const vOffL = (vv0 && vv0.offsetLeft) || 0, vOffT = (vv0 && vv0.offsetTop) || 0;
@@ -3855,31 +3868,39 @@ function toggleSubmenu(btn){
   let sub = btn._sub;
   if(!sub){ sub = btn.nextElementSibling; if(sub) btn._sub = sub; }
   if(!sub) return;
+  const wrap = btn.closest('.submenu-wrap');
   const willShow = sub.style.display === 'none' || !sub.style.display;
   // 关掉其它已展开的子菜单（一次只开一个）
-  document.querySelectorAll('.submenu').forEach(x=>{ if(x!==sub) x.style.display='none'; });
-  if(!willShow){ sub.style.display='none'; return; }
-  // 挂到 <body> 下：主菜单有开场动画（动画里的 transform 会让 fixed 后代相对**菜单**定位
-  // 而不是视口）→ 位置会算错 ✗。放到 body 下就永远相对视口，稳。
-  if(sub.parentElement !== document.body){
-    document.querySelectorAll('body > .submenu').forEach(x=>{ if(x!==sub) x.remove(); });
-    document.body.appendChild(sub);
+  closeOtherSubmenus(sub);
+  if(!willShow){
+    sub.style.display='none';
+    if(wrap) wrap.classList.remove('open');
+    return;
   }
+  if(wrap) wrap.classList.add('open');
   sub.style.display='block';
   sub.style.position='fixed';
   sub.style.left='0px'; sub.style.top='0px';   // 先归零再量，位置不影响尺寸
-  const sw = sub.offsetWidth || 170, sh = sub.offsetHeight || 160;
+  positionSubmenu(sub, btn);
+  makeDraggable(sub, {handle:'.sub-grip'});
+}
+/* 把子菜单摆到主菜单**旁边**：
+   ① 主菜单左侧（主菜单靠右时最自然）→ ② 右侧 → ③ 上方/下方（窄屏左右都塞不下）
+   量位置一律用 offsetBox()（布局盒子），**不能用 getBoundingClientRect**——
+   主菜单出现时在播 menuPop 动画，rect 拿到的是 transform 缩放后的尺寸，算出来会偏 ✗ */
+function positionSubmenu(sub, btn){
+  const sw = sub.offsetWidth || 170, sh = sub.offsetHeight || 170;
   const menu = btn.closest('.bar-menu') || btn.closest('.ov-menu');
-  // 用布局盒子（不受动画 transform 影响），别用 getBoundingClientRect ✗
   const mr = menu ? offsetBox(menu) : offsetBox(btn);
   const tr = offsetBox(btn);
   const vw = window.innerWidth, vh = window.innerHeight, PAD = 6, GAP = 8;
-  let left, top;
-  if(mr.left - GAP - sw >= PAD){                 // ① 放主菜单**左侧**（主菜单贴右边时最常用）
-    left = mr.left - GAP - sw; top = tr.top;
-  }else if(mr.right + GAP + sw <= vw - PAD){     // ② 左侧不够 → 放右侧
-    left = mr.right + GAP; top = tr.top;
-  }else{                                         // ③ 窄屏左右都放不下 → 放到主菜单上方/下方
+  let left, top, side;
+  if(mr.left - GAP - sw >= PAD){                 // ① 主菜单左侧
+    left = mr.left - GAP - sw; top = tr.top; side = 'left';
+  }else if(mr.right + GAP + sw <= vw - PAD){     // ② 右侧
+    left = mr.right + GAP; top = tr.top; side = 'right';
+  }else{                                         // ③ 上方 / 下方
+    side = 'stack';
     left = Math.min(Math.max(PAD, mr.left), Math.max(PAD, vw - sw - PAD));
     if(mr.top - GAP - sh >= PAD) top = mr.top - GAP - sh;
     else if(mr.bottom + GAP + sh <= vh - PAD) top = mr.bottom + GAP;
@@ -3887,9 +3908,23 @@ function toggleSubmenu(btn){
   }
   left = Math.min(Math.max(PAD, left), Math.max(PAD, vw - sw - PAD));
   top  = Math.min(Math.max(PAD, top),  Math.max(PAD, vh - sh - PAD));
+  // 左右摆放时，若底边超出主菜单太多（子菜单比主菜单高），往上提一点，
+  // 让子菜单底边**不越过主菜单底边** —— 否则会垂到底部操作栏上，看起来"错位" ✗
+  if(side === 'left' || side === 'right'){
+    if(top + sh > mr.bottom) top = Math.max(PAD, Math.min(top, mr.bottom - sh));
+    // 仍然超出（子菜单太高）→ 以触发器为中心尽量居中在菜单旁
+    if(top + sh > vh - PAD) top = Math.max(PAD, vh - PAD - sh);
+  }
+  sub.dataset.side = side;
   sub.style.left = Math.round(left) + 'px';
   sub.style.top  = Math.round(top) + 'px';
-  makeDraggable(sub);      // 可拖动：拖完就停在用户放的位置
+}
+function closeOtherSubmenus(keep){
+  document.querySelectorAll('.submenu').forEach(x=>{
+    if(x===keep) return;
+    x.style.display='none';
+    const w=x.closest('.submenu-wrap'); if(w) w.classList.remove('open');
+  });
 }
 let previewScale = 1;
 /* 把「条件格式 → 手动行样式 → 列样式 → 单元格样式」合成为一段 CSS 文本。
@@ -4982,7 +5017,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>新建记录</b>：点击"新建记录"，在识别框粘贴整段文字自动识别填入</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>智能识别</b>：输入"张三 1380000 广州"自动提取姓名、电话、城市</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>说「清空」重置</b>：在识别框里说（或打）"清空"，就把识别框和已填入的内容一起清掉，方便连续录入。清空有两种方式，可在「更多 → 清空方式」里切：<b>直接抹掉</b>（默认，旧文字真的删掉）／<b>保留隐藏</b>（一个字都不改，只把旧文字藏起来 —— 用手机键盘听写时最不容易打断语音；藏起来的旧文字不会再冒出来，等你点别处或保存时才真正删掉）</p>'+
-    '<p style="margin:4px 0;font-size:13px">• <b>说「回车」保存并接着录</b>：一条说完说"回车"，自动识别、保存、继续录下一条。识别框是空的（或表单没任何改动）时<b>不会存空记录</b>，要强制保存请点「添加记录」；保存后识别框里残留的句号等标点会自动清掉</p><p style="margin:4px 0;font-size:13px">• <b>连续语音输入</b>（新建记录弹窗底部的开关）：开着时，说「回车」保存后弹窗<b>不重建</b>，手机键盘不收起、语音听写不中断，可以一直说下去；关掉则按老方式（保存后重建弹窗，键盘会收起）</p>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>说「回车」保存并接着录</b>：一条说完说"回车"，自动识别、保存、继续录下一条。识别框是空的（或表单没任何改动）时<b>不会存空记录</b>，要强制保存请点「添加记录」；保存后识别框里残留的句号等标点会自动清掉</p><p style="margin:4px 0;font-size:13px">• <b>「回车」防重复</b>：语音有时会把一次「回车」识别两次，或上一次的听写尾巴 + 下一次开头都带了「回车」。系统会自动合并 —— <b>短时间内重复出现的「回车」只执行一次保存</b>，不会一次说出一串"回车"就存出好几条；正常一条一条说、间隔一两秒的连续录入不受影响</p><p style="margin:4px 0;font-size:13px">• <b>连续语音输入</b>（新建记录弹窗底部的开关）：开着时，说「回车」保存后弹窗<b>不重建</b>，手机键盘不收起、语音听写不中断，可以一直说下去；关掉则按老方式（保存后重建弹窗，键盘会收起）</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>回车</b>：识别框按回车直接保存并继续录入下一条</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>长按行号</b>：插入行（上方空行）</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>长按记录</b>：进入多选模式，可批量删除或格式设置</p>'+
@@ -5006,7 +5041,8 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>导出 PDF</b>：表内「更多」→ 导出 PDF。<b>文字版</b>是矢量内容，文字可选中、可搜索、任意缩放都清晰且体积小；<b>图片版</b>按 300DPI 渲染成图片，兼容性最好、样式保真，但文字不可选中。两者排版完全一致</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>打印预览</b>：表内「更多」→ 预览，可缩放确认版式后再打印</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>导出 CSV / JSON</b>：表内「更多」中；CSV 可直接用 Excel 打开</p>'+
-    '<p style="margin:4px 0;font-size:13px">• <b>导入记录（合并）</b>：表内「更多」→ 导入记录，把外部数据合并进当前表</p>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>导入导出</b>：表内「更多」→ 导入导出，展开子菜单后可「导入记录（合并）/ 导出 CSV / 导出 JSON / 导出 PDF」。子菜单默认贴在「更多」菜单<b>旁边</b>（空间不够时自动翻到上方/下方）；按住它顶部的<b>「⠿ 拖动可移动」</b>那一条可以把它拖到顺手的位置</p>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>导入记录（合并）</b>：把外部数据按同名字段合并进当前表（本表没有的字段忽略、关联关系不导入）</p>'+
     '<h3 style="margin:16px 0 8px">撤销与分享</h3>'+
     '<p style="margin:4px 0;font-size:13px">• <b>撤销</b>：概览或表内"更多"中查看操作历史，可选择撤销任意一步</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>分享软件</b>：左侧栏分享按钮，可下载或微信发送整个数据库</p>'+
@@ -5023,7 +5059,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-11.1</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-11.3</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -6997,6 +7033,7 @@ function bindRecordNav(modal, t){
 function openRecordModal(tableId, rowId){
   const t = db.tables.find(x=>x.id===tableId); if(!t) return;
   if(t._batchMode) exitBatchMode(tableId);
+  enterGateReset();   // 新开弹窗 = 新会话：清掉上一轮的回车冷却，否则第一次说话会被误判成"重复" ✗
   const row = rowId ? t.rows.find(r=>r.id===rowId) : null;
   const isEdit = !!row;
   const _fuid = Date.now();
@@ -7531,6 +7568,65 @@ function markRecordBase(tableId){
   if(!m) return;
   m.dataset.baseSig = recordFormSignature(tableId || m.dataset.table || '');
 }
+/* ── 说一次「回车」只能保存一次（防重复保存）──────────────────────────────
+   问题：识别框的 input 处理器遇到含"回车"的文字就 `setTimeout(()=>saveRecord(...), 200)`。
+   但语音识别可能在极短时间内**回调两次**（识别器把"回车"重复识别一次；或者语音键盘被中断后
+   再输入一次，上一次的听写尾巴 + 这一次的开头都带了"回车"）→ 两个 200ms 的保存定时器都被排上
+   → **一次「回车」存出两条记录** ✗。既有守卫 `beforeSig === recordFormSignature()` 在
+   clearInputKeepVoice **之前**读签名，第二次进来时表单已被改过，拦不住 ✗。
+
+   解法：**闸门 + 冷却时间**（两道，互为补充）：
+   ① `_enterLock.pending`：一次回车请求"正在保存中"时，同表再来的回车请求直接丢弃
+      （覆盖"同一批 input 连发两次"这种真正并行的情况）
+   ② 冷却 `_enterAt`：从上次**真正保存成功**起算，`ENTER_COOLDOWN_MS` 内不再保存
+      （覆盖"第一次已保存完、第二次迟到几百毫秒"的情况）
+
+   ⚠️ **不要再用"表单指纹没变就不保存"当第三道闸** ✗ —— 试过，会**误杀正常连续录入**：
+   连续录入每次保存后表单会 `resetRecordModalInPlace` 回到默认值，于是"下一条"进来时
+   指纹恰好和"上次保存后"一模一样，被当成重复丢弃（实测两条独立记录只存下了 1 条）。
+   "重复回车"和"正式开始下一条"在指纹上无法区分，所以指纹只能用来判断
+   "这次回车到底有没有带新内容"（放在调用处 `filled<=0` 那个判断里），不能用来判重。
+
+   ⚠️ 冷却时间**不能太长** ✗ —— 设成 1200ms 时，真实连续录入（每条说一句、间隔 700~900ms）
+   的第二条就会被误杀（`db-smart-name` 实测 afterReal:0）。调到 **450ms**：
+   足够覆盖"重复派发"（同一批 input、或 200ms 延迟保存后的紧邻重复），
+   又不会挡住正常人说下一句（说话本身就要 1 秒以上）。
+   `*/
+const ENTER_COOLDOWN_MS = 450;    // 一次「回车」之后的静默期：重复派发的回车在这个窗口内被忽略（要够短，别挡住正常连续录入）
+let _enterAt = 0;                 // 上次真正执行保存的时刻
+let _enterLock = null;            // 回车请求状态 { tableId, uid, at, pending }
+let _srLast = null;               // saveRecord 兜底防重：上一次真正执行的 { tableId, at }
+/* 通过闸门返回 true（放行），返回 false（这是重复的回车，丢弃）。
+   uid 是识别框的唯一标识：不同弹窗/不同表各自独立，互不影响。 */
+function enterGate(tableId, uid){
+  const now = Date.now();
+  // ① 有同表的回车正在保存中 → 丢弃
+  if(_enterLock && _enterLock.pending && _enterLock.tableId === tableId){
+    vlog && vlog('回车重复请求（上一次还在保存中）→ 已忽略');
+    return false;
+  }
+  // ② 冷却期内 → 丢弃
+  if(now - _enterAt < ENTER_COOLDOWN_MS){
+    vlog && vlog('回车重复请求（距上次保存 ' + (now - _enterAt) + 'ms，冷却中）→ 已忽略');
+    return false;
+  }
+  _enterLock = { tableId:tableId, uid:uid, at:now, pending:true };
+  return true;
+}
+/* 保存真正完成后调用：开始冷却。
+   必须在 saveRecord 里 save() 之后调，冷却计时才从"真的存下来"那一刻起算。 */
+function enterGateDone(tableId, uid){
+  _enterAt = Date.now();
+  _enterLock = { tableId:tableId, uid:uid, at:_enterAt, pending:false };
+}
+/* 本次回车没有真正保存（内容为空 / 校验没过 / 被上层丢弃）→ 立刻放开闸门，
+   别让一次"空回车"把紧接着的正常回车挡住 ✗ */
+function enterGateClear(){
+  _enterLock = null; _enterAt = 0; _srLast = null;
+}
+function enterGateReset(){
+  _enterAt = 0; _enterLock = null; _srLast = null;
+}
 /* 语音指令：识别框里出现「清空」二字就当作清空指令（可带"请/帮我/麻烦"前缀）。
    用词边界判定而不是简单包含 —— 否则「仓库已清空」这类正常内容也会把识别框清掉。 */
 const SMART_CLEAR_CMD = /(^|[^\u4e00-\u9fa5])(请|帮我|麻烦)?清空([^\u4e00-\u9fa5]|$)/;
@@ -8017,6 +8113,10 @@ function bindSmartInput(){
       // 顺序很重要：先把"回车"二字去掉、把要识别的文字记下来，**再**清空识别框。
       // 清空走 clearInputKeepVoice（按当前「清空方式」），尽量不打断听写。
       const keep = smartBoxText(box).replace(/回车/g, '').trim();
+      // ⚠️ 闸门必须在**任何副作用之前**过（它自己记"保存前"的指纹）——
+      //    否则第二次进来时表单已被 runSmartFill 改过，指纹兜底就失效了 ✗
+      const uid = box._uid || (box._uid = 'sb' + Math.random().toString(36).slice(2));
+      if(!enterGate(tid, uid)) return;              // 短时间内的第二次「回车」→ 直接丢弃
       const beforeSig = form ? (form.dataset.baseSig || '') : '';
       clearInputKeepVoice(box);
       box._tailUntil = Date.now() + 1500;           // 保存后听写尾巴常会带一个句号过来，自动清掉
@@ -8026,9 +8126,16 @@ function bindSmartInput(){
         // 表单没有任何变化 → 别保存（否则听写尾巴再冒出一个"回车"就会存一条空记录 ✗）
         if(filled <= 0 && beforeSig && beforeSig === recordFormSignature(tid)){
           toast('识别框是空的，没有内容可保存（要强制保存请点「添加记录」）');
+          enterGateClear();               // 这次没保存，放开闸门 —— 别让"空回车"挡住紧接着的正常回车
           return;
         }
-        setTimeout(()=>{ saveRecord(tid, form.dataset.rowid || ''); }, 200);
+        setTimeout(()=>{
+          const saved = saveRecord(tid, form.dataset.rowid || '');
+          // 真存下来了才落冷却（enterGateDone）；被校验拦下或判定成重复 → 放开闸门，
+          // 否则用户补完必填项再按回车会被当成重复丢掉 ✗
+          if(saved === true) enterGateDone(tid, uid);
+          else enterGateClear();
+        }, 200);
         return;
       }
     }
@@ -8074,7 +8181,12 @@ function bindSmartInput(){
       if(!form || !form.dataset.table) return;
       const tid = form.dataset.table;
       const rid = form.dataset.rowid || '';
-      saveRecord(tid, rid);
+      // 同一个防重闸门：语音键盘/系统偶尔会把一次回车派发两次（keydown 重复），
+      // 短时间内的第二次直接丢弃，避免存出两条记录 ✗
+      const uid = box._uid || (box._uid = 'sb' + Math.random().toString(36).slice(2));
+      if(!enterGate(tid, uid)) return;
+      const saved = saveRecord(tid, rid);
+      if(saved === true) enterGateDone(tid, uid); else enterGateClear();
     }
   });
 }
@@ -8116,7 +8228,19 @@ function resetRecordModalInPlace(tableId){
 }
 function saveRecord(tableId, rowId){
   const t = db.tables.find(x=>x.id===tableId); if(!t) return;
+  /* 兜底防重：saveRecord 是"真正往表里塞一行"的唯一出口，所以这里再拦一道 ——
+     任何调用路径（语音「回车」、实体回车键、表单 onsubmit）在极短时间内重复触发，都只保存一次。
+     用"同表 + 50ms 内"作为判据：正常人不可能在 50ms 内真的提交两条不同记录，
+     而重复派发一定落在这个窗口内。 */
+  const _srNow = Date.now();
+  if(_srLast && _srLast.tableId === tableId && _srNow - _srLast.at < 50){
+    vlog && vlog('saveRecord 重复调用（' + (_srNow - _srLast.at) + 'ms 内）→ 已忽略');
+    return 'dup';
+  }
+  _srLast = { tableId:tableId, at:_srNow };
   // check required fields
+  // 校验失败要放开去重记录，否则用户补好必填项后再按回车会被当成"重复"丢掉 ✗
+  const _bail = ()=>{ _srLast = null; return false; };
   for(const f of t.fields){
     if(!f.required) continue;
     const el = document.querySelector(`#modal-root [data-fid="${f.id}"]`);
@@ -8127,7 +8251,7 @@ function saveRecord(tableId, rowId){
     else { empty = !el.value || !el.value.trim(); }
     if(empty){
       showAlert('「'+f.name+'」是必填项，请填写后再保存');
-      el.focus(); return;
+      el.focus(); return _bail();
     }
   }
   const values = {};
@@ -8149,7 +8273,7 @@ function saveRecord(tableId, rowId){
           const dup = cvs.find(cv=>rvArr.some(r=>String(r)===cv));
           if(dup !== undefined){
             showAlert('「'+f.name+'」的值「'+dup+'」已存在，不允许重复');
-            el.focus(); return;
+            el.focus(); return _bail();
           }
         }
       }
@@ -8160,7 +8284,7 @@ function saveRecord(tableId, rowId){
     if(f.type==='number'||f.type==='money'){
       if(v===''){ values[f.id] = null; continue; }
       v = Number(v);
-      if(isNaN(v)){ toast('「'+f.name+'」需要是数字'); return; }
+      if(isNaN(v)){ toast('「'+f.name+'」需要是数字'); return _bail(); }
       values[f.id] = v;
     }else if(f.type==='tags'){
       values[f.id] = v ? v.split(/[,，]/).map(s=>s.trim()).filter(Boolean) : [];
@@ -8171,7 +8295,7 @@ function saveRecord(tableId, rowId){
     }else if(f.type==='phone'){
       if(v===''){ values[f.id] = ''; continue; }
       const chk = validatePhone(v);
-      if(!chk.ok){ checkPhone(el); toast('「'+f.name+'」'+chk.msg); el.focus(); return; }
+      if(!chk.ok){ checkPhone(el); toast('「'+f.name+'」'+chk.msg); el.focus(); return _bail(); }
       values[f.id] = v;
     }else{
       values[f.id] = v;
@@ -8185,6 +8309,7 @@ function saveRecord(tableId, rowId){
   }
   t.updatedAt = Date.now();
   save();
+  // 记录已真正落盘 —— 「回车」闸门的冷却/复位由调用方(enterGateDone)负责
   const wasEdit = !!rowId;
   const cont = wasEdit ? localStorage.getItem('lighter-db-opt-editcont') !== '0' : localStorage.getItem('lighter-db-opt-continue') !== '0';  // 保存后是否自动进入下一条
   // 连续录入（新建）：**原地重置**表单，不关弹窗、不重建识别框 ——
@@ -8192,7 +8317,7 @@ function saveRecord(tableId, rowId){
   if(!wasEdit && cont && voiceContinueOn() && resetRecordModalInPlace(tableId)){
     setTimeout(()=>{ try{ renderTable(t); }catch(e){} }, 30);   // 表格照常刷新，但挪出这一轮事件，别扰动听写
     toast('已添加 1 条记录，可继续录入（键盘/语音不会断）');
-    return;
+    return true;
   }
   // Capture the VISUAL ANCHOR before closing: the anchor is where the modal sat before any keyboard pushed it up,
   // so the next record reopens at the same on-screen position even if the keyboard had shoved the modal to the top.
@@ -8202,7 +8327,7 @@ function saveRecord(tableId, rowId){
   const _oldLeft = _oldModal ? _oldModal.getBoundingClientRect().left : null;
   closeModal();
   renderTable(t); // 只重绘当前表，避免整页 render() 按 hash 切走视图
-  if(!cont) return;
+  if(!cont) return true;
   openRecordModal(tableId, '');
   if(_oldAnchor != null){
     const nm = document.querySelector('#modal-root .modal');
@@ -8219,6 +8344,7 @@ function saveRecord(tableId, rowId){
     if(si){ si.focus({preventScroll:true}); }
   }
   toast(wasEdit ? '已保存修改，可继续录入新记录' : '已添加 1 条记录，可继续录入');
+  return true;
 }
 
 /* ===== 建表 / 管理表 ===== */
