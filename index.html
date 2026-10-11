@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-10.14</title>
+<title>轻量数据库 · v2026-10-11.1</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -897,7 +897,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-10.14">v2026-10-10.14</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-11.1">v2026-10-11.1</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5018,12 +5018,12 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>回收站</b>：左侧栏「回收站」，删除的记录先放到这里，可单条还原或彻底清除</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>容量预警</b>：侧边栏底部显示占用；接近上限时进度条变红并提示导出备份。写满时<b>保存会失败并弹窗提醒</b>，此时应先导出备份，再删掉一些图片或旧记录释放空间</p>'+
     '<h3 style="margin:16px 0 8px">智能识别规则</h3>'+
-    '<p style="margin:4px 0;font-size:13px">• <b>姓名</b>：自动识别中文姓名（2-4字，含复姓）。多个姓名用「和/与/跟/、」连接时（如"张三和李四"）会一并填入，以「、」分隔；单个姓名优先取紧挨电话号的那个，其次取最靠前的</p>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>姓名</b>：自动识别中文姓名（2-4字，含复姓）。多个姓名用「和/与/跟/、」连接时（如"张三和李四"）会一并填入，以「、」分隔；单个姓名优先取紧挨电话号的那个，其次取最靠前的。<b>姓名后面紧跟着其他文字时</b>（如"张三丰说今天广州"，中间没有空格），按「姓氏 + 后面两个字」切：单姓共 3 字、复姓共 4 字</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>电话</b>：自动识别11位手机号</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-10.14</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-11.1</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7643,6 +7643,26 @@ function isNameWord(w){
   // single surname
   return COMMON_SURNAMES.includes(w[0]);
 }
+/* 姓名后面**紧跟着其他文字**（没有分隔符、没有数字，如"张三丰说今天广州"）时，
+   按「姓氏 + 后面两个字」切：单姓共 3 字、复姓共 4 字。
+   为什么需要：语音听写常常不吐空格，姓名和后面的话粘成一整段 ——
+   原来只能整段匹配（≤4 字会误当成姓名，>4 字则完全识别不到）✗ */
+function cutNameBySurname(run, okName){
+  if(!run) return null;
+  const t = String(run);
+  if(!/^[\u4e00-\u9fa5·]+$/.test(t)) return null;
+  const first2 = t.slice(0, 2);
+  const L = COMPOUND_SURNAMES.includes(first2) ? 4 : 3;   // 复姓 + 2 字 / 单姓 + 2 字
+  if(t.length <= L) return null;                          // 没有多出来的文字，不用切
+  const cand = t.slice(0, L);
+  if(!okName(cand)) return null;
+  // 切出来最后一个字是**并列连接符** → 说明这是"张三和李四"被拦腰截断，不是姓名（如"张三和"）✗
+  // （只在**末位**判断："李和平"这种中间带"和"的真姓名要放行）
+  if(NAME_CONNECTORS.includes(cand[cand.length - 1])) return null;
+  // 末位是**地名后缀** → 这是"广州市/天河区"这类地名被当成姓名了 ✗
+  if(/[市区县省路街号村镇乡]$/.test(cand)) return null;
+  return cand;
+}
 // 姓名并列的连接符
 const NAME_CONNECTORS = ['和','与','跟','及','、'];
 // 姓名后面允许紧跟的字符：分隔符 / 数字 / 常见助词。
@@ -7872,10 +7892,17 @@ function runSmartFill(tableId, textOverride){
       let m;
       while((m = TOKEN_RE.exec(text))){
         const run = m[0];
-        // 整个词元就是姓名（常见情况）
-        if(okName(run)) cands.push({ w:run, pos:m.index });
-        // 词元里粘了数字（语音转写常无空格，如"张三13800001234"）时，
-        // 再在词元内部滑动找 2-4 字姓名；纯汉字长词元不滑，避免切出"广州市天"这类噪声
+        // ① 姓名后面紧跟其他文字 → 按「姓氏 + 后面两个字」切（单姓 3 字 / 复姓 4 字）。
+        //    这条优先于"整段当姓名"：否则"张三丰说"这种 4 字段会被整段当成姓名 ✗
+        const cut = cutNameBySurname(run, okName);
+        if(cut){
+          cands.push({ w:cut, pos:m.index });
+        }else if(okName(run)){
+          // ② 整个词元就是姓名（常见情况）
+          cands.push({ w:run, pos:m.index });
+        }
+        // ③ 词元里粘了数字（语音转写常无空格，如"张三13800001234"）时，
+        //    再在词元内部滑动找 2-4 字姓名；纯汉字长词元不滑，避免切出"广州市天"这类噪声
         if(/\d/.test(run) && !okName(run)){
           for(let s=0; s<run.length; s++){
             for(let L=4; L>=2 && s+L<=run.length; L--){
