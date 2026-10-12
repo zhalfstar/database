@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-12.8</title>
+<title>轻量数据库 · v2026-10-12.9</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.8">v2026-10-12.8</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.9">v2026-10-12.9</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5075,7 +5075,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.8</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.9</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -8606,8 +8606,12 @@ function bindSmartInput(){
       // 顺序很重要：先把"回车"二字去掉、把要识别的文字记下来，**再**清空识别框。
       // 清空走 clearInputKeepVoice（按当前「清空方式」），尽量不打断听写。
       // ⭐ 当前这句 = **最后一个「回车」周围**那一小段：
-      //    ① 文字以「回车」结尾（正常：说完一条就说回车）→ 取**它前面**那段
-      //    ② 文字不以「回车」结尾（后面还有话 / 识别器把整段重写了）→ 取**它后面**那段
+      //    ① 用户**逐字**说的、且文字以「回车」结尾 → 取**它前面**那段（就是刚说的这条）
+      //    ② 其它情况（识别器**整段重写**，或后面还有话）→ 取**它后面**那段
+      //    为什么用"这次插入有多大"来区分：真机日志实证 —— 用户说话是**逐字**插入
+      //    （`beforeinput data=len=1 "车"`），而识别器把整段重新提交时是**一次性插一大块**
+      //    （`data=len=123`）。整段重写时"最后一个回车之前"是**旧记录**（已保存过），
+      //    取它就会存出重复 ✗（真机：`待识别=len=7 "。曾华杰， ，"` —— 曾华杰是上一条已存的）
       //    为什么必须这么切：识别器会把**整段（好几条）**重新提交，且旧记录的文字**会被改写**，
       //    所以"把已保存内容从整段里剔掉"永远剔不干净 → 残留里带着**第 1 条** →
       //    解析时取"第一个像姓名的内容" → 就存出"和第一条一样"的重复记录 ✗
@@ -8616,7 +8620,9 @@ function bindSmartInput(){
       const rawNow = box.value || '';
       const enterParts = rawNow.split(/回车/);
       const endsWithEnter = /回车[\s。.，,、]*$/.test(rawNow);
-      let segNow = endsWithEnter ? enterParts[enterParts.length - 2] : enterParts[enterParts.length - 1];
+      const bulkInsert = (box._lastInsLen || 0) >= 20;      // 20 字以上 = 识别器整段重写
+      const takeBefore = endsWithEnter && !bulkInsert;      // 只有"用户逐字说的"才取回车**前**那段
+      let segNow = takeBefore ? enterParts[enterParts.length - 2] : enterParts[enterParts.length - 1];
       if(segNow == null) segNow = '';
       const keep0 = smartStripHandled(segNow).replace(/回车/g, '').trim();
       // ⭐ 剔除后若只剩"残渣"（几乎全是标点）→ 当成没有内容。
@@ -8626,7 +8632,8 @@ function bindSmartInput(){
       const rawLen = String(box.value || '').replace(/\s/g, '').length;
       const leftover = meaningful.length < 3 && rawLen > meaningful.length * 4;
       const keep = leftover ? '' : keep0;
-      vlog('回车：原文=' + vlogText(box.value) + ' | 切到' + (endsWithEnter ? '回车前' : '回车后')
+      vlog('回车：原文=' + vlogText(box.value) + ' | 切到' + (takeBefore ? '回车前' : '回车后')
+           + (bulkInsert ? '(整段重写)' : '')
            + ' | 待识别=' + vlogText(keep) + (leftover ? '（只剩残渣→当空）' : '')
            + ' | 已保存片段=' + (((_smartHandled && _smartHandled.frags) || []).length) + '条');
       // ⚠️ 闸门必须在**任何副作用之前**过（它自己记"保存前"的指纹）——
@@ -8725,7 +8732,12 @@ function bindSmartInput(){
       if(t === 'beforeinput'){
         // ⭐ 关键：记下"这次要插入什么内容"（e.data）—— 停止听写时的整段重播会在这里现形
         extra = '（' + ((e && e.inputType) || '?') + '）';
-        if(e && e.data != null) extra += ' data=' + vlogText(e.data);
+        if(e && e.data != null){
+          extra += ' data=' + vlogText(e.data);
+          // ⭐ 记下这次插入的规模：用户说话是**逐字**插入（1~2 字），
+          //    识别器"整段重写"是**一次性插一大块**（真机日志：data=len=123 / len=152）
+          try{ box._lastInsLen = String(e.data).length; }catch(err){}
+        }
       }
       if(t === 'focus' || t === 'blur'){
         extra += ' 框里=' + vlogText(box.value);
