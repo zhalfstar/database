@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-12.1</title>
+<title>轻量数据库 · v2026-10-12.2</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -310,6 +310,20 @@ body.resizing{overflow:hidden}
 .resize-col,.resize-row{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .has-row-res{position:relative}
 .row-resizer::after{content:'';position:absolute;left:12%;right:12%;bottom:5px;height:3px;background:var(--accent);opacity:.55}
+/* ===== 单元格就地编辑（只在电脑版生效；手机/平板不会进入这个状态）===== */
+table.grid td.cell-editing{padding:2px 4px;overflow:visible}
+.cell-edit-wrap{display:flex;align-items:center;min-width:76px;width:100%}
+.cell-edit-in{width:100%;min-width:76px;box-sizing:border-box;font-family:inherit;font-size:13px;line-height:1.3;
+  color:var(--text);background:var(--panel);border:1px solid var(--accent);border-radius:6px;padding:5px 7px;outline:none}
+.cell-edit-in:focus{box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent)}
+select.cell-edit-in{padding:4px 6px}
+.cell-edit-wrap .msel{width:100%}
+.cell-edit-wrap .msel-btn{padding:5px 8px;font-size:13px}
+/* 电脑端给可编辑单元格一点"这里能改"的提示（鼠标才有 hover，触屏不受影响） */
+@media (hover:hover) and (pointer:fine){
+  table.grid tbody td[data-fid]{cursor:text}
+  table.grid tbody td[data-fid]:hover{box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent)}
+}
 table.grid thead th{position:sticky;top:0;background:var(--panel2);z-index:2;color:var(--muted);font-weight:600;user-select:none;touch-action:pan-y}
 .th-main.dragging{opacity:.4}
 .th-main.drop-col{outline:2px dashed var(--accent);outline-offset:-2px;border-radius:6px}
@@ -905,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.1">v2026-10-12.1</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.2">v2026-10-12.2</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5025,6 +5039,8 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>数字分组</b>：数字列中数值相同的记录会自动成组，点击组可查看成员、移除成员或解散整组——适合对账、查重</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>跨表关联</b>：长按某条记录 →「关联到其他记录」，可把不同表里的记录互相挂接、查看和解绑</p>'+
     '<h3 style="margin:16px 0 8px">字段与表头</h3>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>单元格直接编辑（仅电脑版）</b>：<b>双击某一格</b>就能就地改这一格的内容 —— 回车（或点别处）保存，Esc 取消，Tab 保存并跳到右边一格。数字/日期/时间/是&#8203;否/选项等字段会自动换成对应的输入控件；「公式」字段由公式算出来，不能直接改；图片和签名请双击最左边的编号列打开记录再编辑</p>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>编辑整条记录</b>：双击最左边的<b>编号列</b>（手机上双击任意处）打开记录弹窗，可一次改多个字段、写语音、加关联</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>双击表头</b>：打开排序与筛选</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>右键/长按表头</b>：行高列宽调整开关、恢复默认、插入列、<b>删除此列</b>（删除列会连同该列的数据一起清掉，操作前会先确认）</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>拖动表头</b>：调整列顺序</p>'+
@@ -5059,7 +5075,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.1</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.2</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -5496,7 +5512,197 @@ function saveFormulaEditor(){
   closeFormulaEditor();   // 只关叠层，底下的「管理表结构」保持不动
   toast('公式已保存，记得点保存完成表结构修改');
 }
+/* 生成一个数据单元格的内容（编号列除外）。
+   renderGrid 与"单元格就地刷新"共用 —— 就地刷新时 g-num 关联角标 / X 跨表角标 /
+   行高拖拽把手都必须原样还在，否则改一个格就把这些弄丢了 ✗ */
+function cellInnerHTML(t, r, f, ctx){
+  ctx = ctx || {};
+  const gnums = ctx.gnums || groupNumbers(t);
+  const xMountIds = ctx.xMountIds || new Set((db.xgroups||[]).map(g=>xMountField(t,g)));
+  const firstFid = t.fields.length ? t.fields[0].id : '';
+  const gid = r.links && (r.links[f.id] || (f.id===firstFid && r.links.__any__));
+  const gnum = gid && gnums[gid] ? gnums[gid] : '';
+  const xgb = (db.xgroups||[]).map((g,i)=>({g,i})).filter(o=>o.g.rows.some(m=>m.t===t.id && m.r===r.id));
+  const xbadge = xgb.map(o=>`<span class="g-num xg" title="跨表关联组（点击查看成员及来源）" onclick="showXGroup('${t.id}','${o.g.id}',event)">X${o.i+1}</span>`).join('');
+  return `${ctx.rowRes||''}${displayVal(r,f)}${gnum?`<span class="g-num" title="查看关联组成员" onclick="showGroupMembers('${t.id}','${f.id}','${gid}',event)">${gnum}</span>`:''}${xMountIds.has(f.id)?xbadge:''}`;
+}
+/* ===== 单元格就地编辑（**只在电脑版**；手机/平板完全不走这里）=====
+   交互：双击某个单元格 → 变成输入框 → 回车/点别处提交，Esc 取消，Tab 提交并跳到右边一格。
+   整条记录仍可用「双击最左边的编号列」或长按菜单打开原来的记录弹窗，行为不变。 */
+let _cellEdit = null;          // 当前正在编辑的单元格状态
+/* 哪些类型可以在格子里直接编辑（图片/签名/图标/公式不在内 —— 它们需要更大的操作区） */
+function canInlineEdit(f){
+  if(!f) return false;
+  return ['text','textarea','rich','number','money','bool','select','tags','date','time','datetime',
+          'duration','book','email','phone','url','location','color'].includes(f.type);
+}
+function cellEditorHTML(f, v){
+  const val = (v==null||v==='undefined'||v==='null') ? '' : v;
+  const esc2 = x=>escAttr(String(x==null?'':x));
+  if(f.type==='number'||f.type==='money') return `<input class="cell-edit-in" type="number" step="any" value="${esc2(val)}"${f.type==='money'?' placeholder="0.00"':''}>`;
+  if(f.type==='date')     return `<input class="cell-edit-in" type="date" value="${esc2(val)}">`;
+  if(f.type==='time')     return `<input class="cell-edit-in" type="time" value="${esc2(val)}">`;
+  if(f.type==='datetime'||f.type==='book') return `<input class="cell-edit-in" type="datetime-local" value="${esc2(String(val).replace(' ','T'))}">`;
+  if(f.type==='bool')     return `<select class="cell-edit-in"><option value=""${val===''?' selected':''}>—</option><option value="true"${val==='true'?' selected':''}>是</option><option value="false"${val==='false'?' selected':''}>否</option></select>`;
+  if(f.type==='color')    return `<input class="cell-edit-in" type="color" value="${/^#[0-9a-fA-F]{6}$/.test(val)?esc2(val):'#4f8ef7'}">`;
+  if(f.type==='select')   return fieldInput(f, Array.isArray(val)?val:[]);   // 复用带主题的下拉（含多选）
+  if(f.type==='tags')     return `<input class="cell-edit-in" type="text" value="${esc2(Array.isArray(val)?val.join('，'):val)}" placeholder="多个用逗号分隔">`;
+  if(f.type==='phone')    return `<input class="cell-edit-in" type="text" inputmode="numeric" maxlength="12" value="${esc2(val)}">`;
+  if(f.type==='email')    return `<input class="cell-edit-in" type="email" value="${esc2(val)}">`;
+  if(f.type==='url')      return `<input class="cell-edit-in" type="url" value="${esc2(val)}">`;
+  if(f.type==='textarea'||f.type==='rich') return `<input class="cell-edit-in" type="text" value="${esc2(String(val).replace(/\s*\n\s*/g,' '))}">`;
+  return `<input class="cell-edit-in" type="text" value="${esc2(val)}">`;
+}
+/* 从编辑器里读回"值"（要和 saveRecord 的存储格式一致：bool 存 'true'/'false'，select 存数组） */
+function readCellValue(wrap, f){
+  if(f.type==='bool'){ const el = wrap.querySelector('select,input[type=checkbox]'); return el ? el.value : ''; }
+  if(f.type==='select') return [...wrap.querySelectorAll('input:checked')].map(c=>c.value);
+  const el = wrap.querySelector('.cell-edit-in,input,select,textarea');
+  if(!el) return '';
+  const raw = el.value == null ? '' : String(el.value);
+  if(f.type==='number'||f.type==='money'){
+    if(raw.trim()==='') return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : '__NUM_ERR__';
+  }
+  if(f.type==='tags') return raw.trim() ? raw.split(/[,，、]/).map(s=>s.trim()).filter(Boolean) : [];
+  if(f.type==='date'||f.type==='time') return raw.trim();
+  if(f.type==='datetime'||f.type==='book') return raw.trim() ? raw.trim().replace('T',' ') : '';
+  return raw.trim();
+}
+/* 校验单个字段的新值；返回错误文案，或 null（通过） */
+function validateCellValue(t, r, f, v){
+  if(v === '__NUM_ERR__') return '「'+f.name+'」需要是数字';
+  const empty = v==null || v==='' || (Array.isArray(v) && !v.length);
+  if(f.required && empty) return '「'+f.name+'」是必填项，不能清空';
+  if(empty) return null;
+  if(f.type==='phone'){
+    const chk = validatePhone(v);
+    if(!chk.ok) return '「'+f.name+'」'+chk.msg;
+  }
+  if(f.unique){
+    const arr = Array.isArray(v) ? v : [String(v)];
+    for(const row of t.rows){
+      if(row.id === r.id) continue;
+      const rv = row.values[f.id];
+      const rvArr = Array.isArray(rv) ? rv : (rv==null||rv==='') ? [] : [String(rv)];
+      const dup = arr.find(cv=>rvArr.some(x=>String(x)===String(cv)));
+      if(dup !== undefined) return '「'+f.name+'」的值「'+dup+'」已存在，不允许重复';
+    }
+  }
+  return null;
+}
+/* 就地刷新一个单元格（不整表重绘 —— 整表重绘会把"点到别处"的那一次点击弄丢 ✗） */
+function refreshCellInPlace(td, t, r, f){
+  const rr = td.querySelector('.row-resizer');
+  td.innerHTML = cellInnerHTML(t, r, f, { rowRes: rr ? rr.outerHTML : '' });
+}
+function startCellEdit(td, tableId, rowId, fieldId){
+  if(window.__isMobile) return;                       // 手机/平板：不动
+  if(!td || !td.dataset || !td.dataset.fid) return;
+  const t = db.tables.find(x=>x.id===tableId); if(!t) return;
+  const r = t.rows.find(x=>x.id===rowId); if(!r) return;
+  const f = t.fields.find(x=>x.id===fieldId); if(!f) return;
+  if(_cellEdit) commitCellEdit();                     // 先提交上一个
+  if(f.type==='formula'){ toast('「'+f.name+'」是公式字段，由公式自动计算，不能直接编辑'); return; }
+  if(!canInlineEdit(f)){ openRecordModal(tableId, rowId); return; }   // 图片/签名/图标 → 走记录弹窗
+  const wrap = document.createElement('div');
+  wrap.className = 'cell-edit-wrap';
+  wrap.innerHTML = cellEditorHTML(f, r.values[fieldId]);
+  td.classList.add('cell-editing');
+  td.innerHTML = '';
+  td.appendChild(wrap);
+  // 「点到格子外面就提交」—— 用 document 的 mousedown（捕获）而不是 blur：
+  // 选项字段是自绘下拉（.msel），里面没有可失焦的输入框，blur 根本不会触发 ✗
+  const onDocDown = e=>{
+    if(!_cellEdit || _cellEdit.td !== td) return;
+    if(td.contains(e.target)) return;      // 点自己内部（含展开的下拉）不算
+    commitCellEdit();
+  };
+  _cellEdit = { td, t, r, f, tableId, rowId, wrap, done:false, onDocDown };
+  document.addEventListener('mousedown', onDocDown, true);
+  const ctl = wrap.querySelector('.cell-edit-in,input,select,textarea');
+  if(ctl){
+    try{ ctl.focus({preventScroll:true}); if(ctl.select) ctl.select(); }catch(e){}
+    ctl.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ e.preventDefault(); commitCellEdit(true); }
+      else if(e.key==='Escape'){ e.preventDefault(); cancelCellEdit(); }
+      else if(e.key==='Tab'){ e.preventDefault(); commitCellEdit(false, e.shiftKey ? -1 : 1); }
+    });
+  } else {
+    cancelCellEdit();     // 没有可聚焦控件（理论上不会）
+  }
+}
+function cleanupCellEdit(st){
+  if(st && st.onDocDown) document.removeEventListener('mousedown', st.onDocDown, true);
+}
+function cancelCellEdit(){
+  const st = _cellEdit; if(!st || st.done) return;
+  st.done = true; _cellEdit = null;
+  cleanupCellEdit(st);
+  const { td, t, r, f } = st;
+  td.classList.remove('cell-editing');
+  refreshCellInPlace(td, t, r, f);
+}
+function commitCellEdit(refocus, moveDir){
+  const st = _cellEdit; if(!st || st.done) return;
+  st.done = true; _cellEdit = null;
+  cleanupCellEdit(st);
+  const { td, t, r, f, wrap } = st;
+  let v; try{ v = readCellValue(wrap, f); }catch(e){ v = ''; }
+  const err = validateCellValue(t, r, f, v);
+  td.classList.remove('cell-editing');
+  if(err){ toast(err); refreshCellInPlace(td, t, r, f); return; }
+  // 值没变就别白写一次存储
+  const old = r.values[f.id];
+  const same = JSON.stringify(old==null?'':old) === JSON.stringify(v==null?'':v);
+  if(!same){
+    r.values[f.id] = v;
+    t.updatedAt = Date.now();
+    save();
+  }
+  refreshCellInPlace(td, t, r, f);
+  if(moveDir) moveCellEdit(td, moveDir);            // Tab：跳到相邻单元格继续编辑
+}
+/* Tab / Shift+Tab：提交后跳到同一行右边（或左边）那一格继续编辑 */
+function moveCellEdit(td, dir){
+  const tr = td.closest('tr'); if(!tr) return;
+  const cells = [...tr.querySelectorAll('td[data-fid]')];
+  let i = cells.indexOf(td) + (dir < 0 ? -1 : 1);
+  let target = cells[i];
+  if(!target){
+    // 本行到头了 → 跳到下一行（Shift+Tab 则上一行）的第一格
+    let row = tr;
+    do{
+      row = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+    }while(row && !row.querySelector('td[data-fid]'));
+    if(!row) return;
+    const list = [...row.querySelectorAll('td[data-fid]')];
+    target = dir < 0 ? list[list.length-1] : list[0];
+  }
+  if(target) startCellEdit(target, td.closest('#grid').dataset.tableId, target.closest('tr').dataset.rid, target.dataset.fid);
+}
+/* 双击单元格 = 就地编辑（**只在电脑版**）。
+   用**捕获阶段**监听：必须比 <tr> 上的 ondblclick(dblEditRow) 先跑，然后拦住它，
+   否则双击单元格会同时打开记录弹窗 ✗。 */
+function bindCellEdit(grid){
+  if(!grid || grid._cellEditBound) return;
+  grid._cellEditBound = true;
+  grid.addEventListener('dblclick', e=>{
+    if(window.__isMobile) return;
+    const td = e.target.closest('td[data-fid]');
+    if(!td || !grid.contains(td)) return;
+    if(td.closest('.totals-row')) return;
+    if(td.querySelector('.cell-edit-wrap')) return;
+    e.stopPropagation(); e.preventDefault();
+    const tr = td.closest('tr');
+    startCellEdit(td, grid.dataset.tableId, tr && tr.dataset.rid, td.dataset.fid);
+  }, true);
+}
 function renderGrid(tableId){
+  // 正在编辑的单元格如果已经不在 DOM 里（表格被重绘/切走了），就丢弃这次编辑 ——
+  // 否则它的"未提交值"可能在别处被写回，改到不该改的数据 ✗
+  if(_cellEdit && !_cellEdit.td.isConnected){ cleanupCellEdit(_cellEdit); _cellEdit = null; }
   setTimeout(()=>bindGridLongPress(tableId), 50);
   const t = db.tables.find(x=>x.id===tableId); if(!t) return;
   const u = uiFor(tableId);
@@ -5535,21 +5741,16 @@ function renderGrid(tableId){
   const xMountIds = new Set((db.xgroups||[]).map(g=>xMountField(t,g)));
   const tds = rows.map((r,ri)=>{
     const rowRes = (ri===0 && view.rowH !== null && view.rowAdjust) ? `<span class="row-resizer" onpointerdown="startResize('${t.id}',event)"></span>` : '';
-    const firstFid = t.fields.length ? t.fields[0].id : '';
     // 行级：条件格式 + 手动行样式（只算一次，给这一行的所有单元格用）
     const cond = condStyleFor(t, r);
     const rs = (t.view && t.view.rowStyle && t.view.rowStyle[r.id]) || {};
     const cells = visFields.map(f=>{
-      const gid = r.links && (r.links[f.id] || (f.id===firstFid && r.links.__any__));
-      const gnum = gid && gnums[gid] ? gnums[gid] : '';
-      const xgb = (db.xgroups||[]).map((g,i)=>({g,i})).filter(o=>o.g.rows.some(m=>m.t===t.id && m.r===r.id));
-      const xbadge = xgb.map(o=>`<span class="g-num xg" title="跨表关联组（点击查看成员及来源）" onclick="showXGroup('${t.id}','${o.g.id}',event)">X${o.i+1}</span>`).join('');
       const cs = (t.view && t.view.colStyle && t.view.colStyle[f.id]) || {};
       const cls = (t.view && t.view.cellStyle && t.view.cellStyle[r.id+'-'+f.id]) || {};
       // 顺序：条件格式 → 手动行样式 → 列样式 → 单元格样式（后面的覆盖前面的）
       const st = Object.assign({}, cond, rs, cs, cls);
       const style = (st.fontFamily?`font-family:${st.fontFamily};`:'')+(st.fontSize?`font-size:${st.fontSize};`:'')+(st.fontColor?`color:${st.fontColor};`:'')+(st.bgColor?`background-color:${st.bgColor};`:'')+(st.textAlign?`text-align:${st.textAlign};`:'')+(st.bold?'font-weight:600;':'');
-      return `<td data-fid="${f.id}" class="${(f.type==='number'||f.type==='money')?'num':''}${rowRes?' has-row-res':''}${st.bgColor?` row-bg`:''}" ${style?`style="${style}"`:''}>${rowRes}${displayVal(r,f)}${gnum?`<span class="g-num" title="查看关联组成员" onclick="showGroupMembers('${t.id}','${f.id}','${gid}',event)">${gnum}</span>`:''}${xMountIds.has(f.id)?xbadge:''}</td>`;
+      return `<td data-fid="${f.id}" class="${(f.type==='number'||f.type==='money')?'num':''}${rowRes?' has-row-res':''}${st.bgColor?` row-bg`:''}" ${style?`style="${style}"`:''}>${cellInnerHTML(t, r, f, {gnums, xMountIds, rowRes})}</td>`;
     }).join('');
     let linkRel = '';
     if(linkMode && linkMode.tableId===t.id){
@@ -5563,7 +5764,7 @@ function renderGrid(tableId){
     const cls = (hitSet.has(r.id)?' hit':'') + linkRel + (linkMode && linkMode.picked.includes(r.id)?' link-picked':'');
     const inBatch = t._batchMode;
     const checked = t._selectedRows && t._selectedRows.has(r.id) ? ' checked' : '';
-    return `<tr data-rid="${r.id}" class="${cls}${inBatch?' batch-row':''}" ${inBatch?`onclick="toggleBatchRow('${t.id}','${r.id}')"`:''} ondblclick="${inBatch?'':`dblEditRow('${t.id}','${r.id}',event)`}" title="${inBatch?'点击选择记录':'双击编辑；长按关联'}">
+    return `<tr data-rid="${r.id}" class="${cls}${inBatch?' batch-row':''}" ${inBatch?`onclick="toggleBatchRow('${t.id}','${r.id}')"`:''} ondblclick="${inBatch?'':`dblEditRow('${t.id}','${r.id}',event)`}" title="${inBatch?'点击选择记录':(window.__isMobile?'双击编辑；长按关联':'双击单元格直接改这一格；双击最左边编号列编辑整条记录；长按关联')}">
       ${inBatch?`<td class="no-cell batch-cell"><input type="checkbox"${checked}></td>`:`<td class="no-cell" data-tid="${t.id}" data-rid="${r.id}" title="长按可修改序号">${r.no!=null?r.no:''}</td>`}
       ${cells}
     </tr>`;
@@ -5606,6 +5807,7 @@ function renderGrid(tableId){
   }
   bindTablePan(scEl);
   bindThTap(grid);
+  bindCellEdit(grid);          // 电脑版：双击单元格就地编辑
   const nsc = grid.querySelector('.table-scroll');
   if(nsc){ nsc.scrollTop = prevTop; nsc.scrollLeft = prevLeft; }
 }
