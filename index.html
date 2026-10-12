@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-12.3</title>
+<title>轻量数据库 · v2026-10-12.4</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.3">v2026-10-12.3</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.4">v2026-10-12.4</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5075,7 +5075,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.3</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.4</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7704,6 +7704,48 @@ function smartPendingText(box){
   if(nC && nR.indexOf(nC) >= 0) return '';
   return raw;                                                      // 真的换了新内容
 }
+/* ── 「刚保存过的那批文字」回声屏蔽（解决"停止听写后识别框又留下刚保存的内容"）──
+   现象：说「回车」存完一条后，**点停止听写**时 iOS 会把整段重新提交一遍，
+   识别框里又出现"刚保存的那批文字"；接着**自动识别（750ms 防抖）会把它重新填进表单**，
+   下一次保存就又把这条存了一遍 ✗。
+   做法（结构化，不依赖文字完全一致）：
+   ① 保存成功后立刻在识别框上**挂好"隐藏罩"**（`_pendingClear` + `_clearedSnapshot` = 刚保存的原文）——
+      这样无论框里又冒出这批文字、还是被重写（标点/个别字变了），`smartBoxText()` 都返回空，
+      既不会触发「回车」再存一次，也不会被自动识别重新填进表单 ✓
+   ② 记一份 `_savedEcho`（归一化文本 + 时间窗口）：万一"隐藏罩"没盖住（差异较大），
+      再按**相似度**兜一次 —— iOS 重认字常常只差一两个字，不能只比"完全相等" ✗ */
+const ECHO_WINDOW_MS = 8000;
+let _savedEcho = null;      // { tableId, norm, until }
+/* 归一化文本相似度：长度接近 + 逐位差异不超过 1/3（对齐比较，够抓"重认成一两个字不同"） */
+function smartTextSimilar(a, b){
+  if(!a || !b) return false;
+  if(a === b) return true;
+  if(Math.min(a.length, b.length) < 3) return false;              // 太短容易误判
+  if(Math.abs(a.length - b.length) > 2) return false;             // 长度差太多就不是同一批
+  let diff = Math.abs(a.length - b.length);
+  const n = Math.min(a.length, b.length);
+  for(let i=0;i<n;i++) if(a[i] !== b[i]) diff++;
+  return diff / Math.max(a.length, b.length) <= 0.34;
+}
+/* 保存成功后调用：给识别框挂"隐藏罩" + 记下回声指纹（弹窗重建也没关系，取当前那个框） */
+function smartArmSavedEcho(tableId, rawText){
+  const n = normSmartText(rawText);
+  if(tableId && n) _savedEcho = { tableId:tableId, norm:n, until: Date.now() + ECHO_WINDOW_MS };
+  const box = document.getElementById('smart-input');
+  if(box && rawText){
+    box._pendingClear = true;
+    box._clearedSnapshot = rawText;      // 这批文字"已经算过了"，再出现一律当空
+    try{ if(typeof box.select === 'function') box.select(); }catch(e){}
+    syncSmartMirror();                   // 立刻盖上镜像层，用户看到的是"已清空，继续说…"
+    vlog('保存后：已给识别框挂上隐藏罩（' + rawText.length + ' 字）');
+  }
+}
+/* 这段文字是不是"刚保存过的那批"（允许一两个字的识别差异）？ */
+function smartIsSavedEcho(nText){
+  const e = _savedEcho;
+  if(!e || !nText || Date.now() > e.until) return false;
+  return smartTextSimilar(nText, e.norm);
+}
 /* ── 内容级兜底：和"刚刚保存过的那条"内容完全一样 → 判定成重播，不再存 ──
    万一 iOS 重播时把字重认了一遍（片段比对没命中），这一步还能拦住重复记录 ✓ */
 let _lastSavedSig = {};     // { [tableId]: { sig, at } }
@@ -7722,6 +7764,10 @@ function smartBoxText(box){
   const raw = box.value || '';
   const snap = box._clearedSnapshot;
   if(!box._pendingClear || !snap || !snap.length) return raw;
+  // ⚠️ 框是空的时候**保持隐藏罩**，不要在这里把它摘掉 ✗ ——
+  //    保存后刚挂上罩时框是空的，若这次调用就把罩摘了，随后重播进来的旧文字
+  //    又会被当成新内容去识别、重新填表、再存一遍 ✗
+  if(!raw) return '';
   if(raw === snap) return '';                       // 还是旧文字：当作空
   const i = raw.indexOf(snap);
   if(i === 0) return raw.slice(snap.length);        // 新文字接在旧文字后面（iOS 听写就是这种）
@@ -7736,6 +7782,9 @@ function smartBoxText(box){
     vlog('识别框：内容被重写，继续隐藏（' + raw.length + ' 字）');
     return '';
   }
+  // ⚠️ 这里**不**做"相似度"判断 ✗ —— 相似度容易误伤"紧跟着录一条很像的记录"
+  //    （比如 张三买书 → 张三买笔）。相似度只用来**压住自动识别**（见下面的防抖处），
+  //    不参与"这段算不算内容"的判断。
   box._pendingClear = false; box._clearedSnapshot = null;   // 旧文字被新内容替换了
   vlog('识别框：旧文字已被新内容替换');
   return raw;
@@ -8395,8 +8444,8 @@ function bindSmartInput(){
       // 于是「回车」被二次执行 → 又存一条；"清空 → 新内容 → 回车"时还会把被清空的旧内容
       // 一起带回来存成第二条 ✗。整批忽略（详见 smartIsReplay 的说明）。
       // ⚠️ 只守「回车」这一步 —— 清空那一步是幂等的，拦它只会误伤（见上面的注释）
-      if(smartIsReplay(box)){
-        vlog('识别框：这批文字是"已处理过的重播" → 整批忽略');
+      if(smartIsReplay(box) || smartIsSavedEcho(normSmartText(smartBoxText(box)))){
+        vlog('识别框：这批文字是"已处理过/刚保存过的重播" → 整批忽略');
         clearTimeout(box._t);
         // 给个提示（2 秒内只提示一次，免得一批重播刷出一堆）：既是"没重复存"的确认，
         // 也告诉真想再存一条一模一样的人"点「添加记录」"这个出口
@@ -8420,6 +8469,7 @@ function bindSmartInput(){
       const uid = box._uid || (box._uid = 'sb' + Math.random().toString(36).slice(2));
       if(!enterGate(tid, uid)) return;              // 短时间内的第二次「回车」→ 直接丢弃
       const beforeSig = form ? (form.dataset.baseSig || '') : '';
+      const rawBefore = box.value || '';            // 保存前框里的原文（保存后要拿它挂"隐藏罩"）
       smartNoteHandled(box, smartBoxText(box));     // 记下"这批已处理"（要在清空之前取）
       clearInputKeepVoice(box);
       box._tailUntil = Date.now() + 1500;           // 保存后听写尾巴常会带一个句号过来，自动清掉
@@ -8444,7 +8494,13 @@ function bindSmartInput(){
           const saved = saveRecord(tid, form.dataset.rowid || '');
           // 真存下来了才落冷却（enterGateDone）；被校验拦下或判定成重复 → 放开闸门，
           // 否则用户补完必填项再按回车会被当成重复丢掉 ✗
-          if(saved === true){ enterGateDone(tid, uid); smartRememberSaved(tid, sigNow); }
+          if(saved === true){
+            enterGateDone(tid, uid);
+            smartRememberSaved(tid, sigNow);
+            // ⭐ 关键：保存成功后立刻给识别框挂"隐藏罩" —— 停止听写时 iOS 会把刚保存的这段
+            //    重新提交一遍，不盖住的话它会被自动识别**重新填进表单**、下一次又存一遍 ✗
+            smartArmSavedEcho(tid, rawBefore);
+          }
           else enterGateClear();
         }, 200);
         return;
@@ -8452,18 +8508,39 @@ function bindSmartInput(){
     }
     syncSmartMirror();                              // 新说的内容实时显示在镜像层上
     box._t = setTimeout(()=>{
+      // ⚠️ 识别框已经被换掉（保存后弹窗重建）→ 这个定时器是**过期的**，必须丢弃 ✗
+      //    否则它的 form 指向旧弹窗（dataset 还在），runSmartFill 会去读**当前**的识别框，
+      //    把"停止听写重播进来的旧文字"重新填进表单 → 下次保存又存一遍 ✗
+      if(!box.isConnected || document.getElementById('smart-input') !== box) return;
       const form = box.closest('.rec-modal');
-      if(form && form.dataset.table) runSmartFill(form.dataset.table);
+      if(!form || !form.dataset.table) return;
+      // ⭐ 刚保存完，框里这段又跟"刚保存的那批"高度相似 → 多半是停止听写时的重播，
+      //    别自动识别 —— 否则会把刚存过的记录**重新填回表单**，下一次保存就又存一遍 ✗
+      //    （只压"自动识别"这一步；用户真要说一条很像的新记录，说「回车」照样能存）
+      if(smartIsSavedEcho(normSmartText(smartBoxText(box)))){
+        vlog('自动识别：与刚保存的内容高度相似 → 跳过自动填入（防重播）');
+        return;
+      }
+      runSmartFill(form.dataset.table);
     }, 750);
   });
   // 焦点离开识别框 = 听写肯定结束了 → 这时才把旧文字真正抹掉
   box.addEventListener('focusout', ()=>{
     vlog('识别框失焦 → 硬清空');
+    if(!box.isConnected) return;          // 已被换掉（弹窗重建）→ 别再去解析当前那个框 ✗
     if(box._pendingClear){
       // 先把还没解析的最后一句解析掉（否则最后说的内容会丢），再清
       try{
         const form = box.closest('.rec-modal');
-        if(form && form.dataset.table && smartBoxText(box).trim()) runSmartFill(form.dataset.table);
+        const t = smartBoxText(box);
+        // ⭐ 这里也必须防重播 ✗ —— 停止听写/弹窗重建都会让识别框失焦，
+        //    此时框里若是"刚保存过的那批"（重播），绝不能再去识别一遍，
+        //    否则刚存的记录会被重新填回表单、下一次保存又存一遍 ✗
+        if(form && form.dataset.table && t.trim() && !smartIsSavedEcho(normSmartText(t))){
+          runSmartFill(form.dataset.table);
+        } else if(t.trim()){
+          vlog('失焦解析：与刚保存的内容高度相似 → 跳过（防重播）');
+        }
       }catch(e){}
       hardClearInput(box);
     }
