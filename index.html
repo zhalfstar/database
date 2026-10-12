@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-12.5</title>
+<title>轻量数据库 · v2026-10-12.6</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.5">v2026-10-12.5</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.6">v2026-10-12.6</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5075,7 +5075,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.5</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.6</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7702,7 +7702,7 @@ function stripFragsSmart(nText, frags){
    `smartBoxText()` 在"整段重播（好几条）"时会返回**前几条那部分**（因为最后一条在末尾），
    拿它判断会把重播当成新内容放过去 ✗。原文里把指令词和**所有**已处理片段都剥掉，
    剥完什么都不剩 → 整批都是已处理过的 → 重播 ✓ */
-function smartIsReplay(box){
+function smartIsReplay(box, minHit){
   if(!box) return false;
   const tid = smartTableIdOf(box);
   if(!tid || _smartHandled.tableId !== tid) return false;
@@ -7715,6 +7715,7 @@ function smartIsReplay(box){
   // ⚠️ 用了"模糊命中"（重认过一两个字）时必须至少 2 条佐证 ✗ ——
   //    否则"张三买书 → 张三买笔"这种正常的连续录入会被当成重播误杀
   if(r.fuzzy > 0 && r.hit < 2) return false;
+  if(r.hit < (minHit || 1)) return false;
   // 窗口内一律算重播；窗口外只有"包含≥2 条已处理内容"才算
   //（避免过了很久之后，用户真的想再录一条一模一样的被误杀）
   return Date.now() <= _smartHandled.until || r.hit >= 2;
@@ -7792,6 +7793,9 @@ function smartArmSavedEcho(tableId, rawText){
 function smartIsSavedEcho(nText){
   const e = _savedEcho;
   if(!e || !nText || Date.now() > e.until) return false;
+  // ⚠️ 这个判断**只用来压住"自动填入"**，绝不参与"要不要保存" ✗ ——
+  //    所以阈值可以放宽（重认过一两个字也算）；就算误判，也只是"实时预览没填"，
+  //    用户说「回车」照样能存（识别用的是 keep，不走这个判断）✓
   return smartTextSimilar(nText, e.norm);
 }
 /* 把"本会话里已经保存过的所有内容片段"从这段文字里剔掉 —— 识别时必须只看剩下的。
@@ -8512,8 +8516,12 @@ function bindSmartInput(){
       // 于是「回车」被二次执行 → 又存一条；"清空 → 新内容 → 回车"时还会把被清空的旧内容
       // 一起带回来存成第二条 ✗。整批忽略（详见 smartIsReplay 的说明）。
       // ⚠️ 只守「回车」这一步 —— 清空那一步是幂等的，拦它只会误伤（见上面的注释）
-      if(smartIsReplay(box) || smartIsSavedEcho(normSmartText(smartBoxText(box)))){
-        vlog('识别框：这批文字是"已处理过/刚保存过的重播" → 整批忽略');
+      // ⚠️ 这里**只用** smartIsReplay（而且要求≥2 条）✗ ——
+      //    单条的完全重播由"隐藏罩"负责（那时 smartBoxText 已经是空、根本不会进到这一步）；
+      //    加"相似度"判断会把"张三买书 → 张三买笔"这种正常的连续录入直接杀掉，
+      //    表现为「说回车没反应」✗
+      if(smartIsReplay(box, 2)){
+        vlog('识别框：这批文字是"整段多条重播" → 整批忽略');
         clearTimeout(box._t);
         // 把这**整批**也记成"已处理"，并把隐藏罩更新到整批 ——
         // 否则"整段重播（好几条）"里前几条会一直漏在外面，反复被识别 ✗
@@ -8562,13 +8570,12 @@ function bindSmartInput(){
           enterGateClear();               // 这次没保存，放开闸门 —— 别让"空回车"挡住紧接着的正常回车
           return;
         }
-        // 内容级兜底：和"刚刚保存过的那条"一模一样 → 判定成停止听写的重播，不再存 ✗
-        // （只对"新建记录"生效；编辑已有记录时允许重复保存同样的内容）
-        if(filled > 0 && !form.dataset.rowid && smartSameAsLastSaved(tid, sigNow)){
-          vlog('内容与刚保存的那条完全相同 → 跳过（判定为重播）');
-          toast('这条和刚保存的那条内容相同，已跳过（避免重复录入）');
-          return;
-        }
+        // ⚠️ 这里**没有**"内容与刚保存的那条一样就跳过"的判断 ✗ ——
+        //    表单签名只包含"被自动识别到的字段"，如果表里只有姓名字段能被识别，
+        //    那么"张三 买书 / 张三 买笔"两条的签名**完全一样** → 第二条会被误杀，
+        //    用户看到的就是「说回车没反应」✗。
+        //    重复录入由另外两层负责：① 单条完全重播 → 隐藏罩（smartBoxText 返回空）；
+        //    ② 整段多条重播 → smartIsReplay(box, 2)。
         setTimeout(()=>{
           const saved = saveRecord(tid, form.dataset.rowid || '');
           // 真存下来了才落冷却（enterGateDone）；被校验拦下或判定成重复 → 放开闸门，
