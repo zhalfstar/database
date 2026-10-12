@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-12.2</title>
+<title>轻量数据库 · v2026-10-12.3</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.2">v2026-10-12.2</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.3">v2026-10-12.3</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5075,7 +5075,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.2</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.3</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7636,9 +7636,9 @@ function hardClearInput(el){
   try{ el.value = ''; }catch(e){}
   try{ el.setSelectionRange(0, 0); }catch(e){}
   el._pendingClear = false; el._clearedSnapshot = null;
-  // ⚠️ 这里**不要**清掉"已处理片段"（clearSmartHandled）✗ ——
+  // ⚠️ 这里**不要**清掉"已处理片段"（_smartHandled）✗ ——
   //    focusout（收起键盘）会在"停止听写的重播"之前跑，清掉就等于把守卫拆了。
-  //    重播窗口只有 6 秒，留着不会误伤正常使用；真正的新会话（重开弹窗）是新的 DOM 元素，天然干净。
+  //    守卫按"表 id + 时间窗口"收口（20 秒），留着不会误伤正常使用。
   syncSmartMirror();
 }
 /* 去掉空白和标点，只留中英文数字 —— 用来判断"这段文字是不是同一批内容"（iOS 提交听写时
@@ -7649,24 +7649,38 @@ function normSmartText(s){ return String(s == null ? '' : s).replace(/[^\u4e00-\
         "说内容 → 说清空 → 说新内容 → 说回车 → 停止听写"会存出两条（把被清空的旧内容也存回来）。
    原因：iOS 停止听写时会把这一整段文字**重新提交一遍**（input 事件又带着刚才那批文字回来），
         于是「回车」被二次执行、被清空的旧内容"复活"又被识别一次 ✗。
-   做法：把"已经处理过的内容片段"记在识别框上（`_handledFrags`），
-        再来一批文字时，把**指令词**（回车/清空）和**已处理片段**都剥掉：
-        剥完什么都不剩 → 说明整批都是"已经处理过的"→ 整批忽略 ✓。
-        只在每个指令之后的 6 秒窗口内生效（重播总是紧跟着发生），
-        过了窗口就恢复正常，避免"用户真的想再录一条一模一样的"被误杀。 */
-const REPLAY_WINDOW_MS = 6000;
+   做法：把"已经处理过的内容片段"记下来，再来一批文字时，把**指令词**（回车/清空）和
+        **已处理片段**都剥掉：剥完什么都不剩 → 说明整批都是"已经处理过的"→ 整批忽略 ✓。
+        只在每个指令之后的一段时间窗口内生效（重播总是紧跟着发生），
+        过了窗口就恢复正常，避免"用户真的想再录一条一模一样的"被误杀。
+
+   ⚠️ **这份记录必须放"模块级"，不能挂在识别框元素上** ✗ ——
+   关掉「连续语音输入」时（或编辑记录时），保存后弹窗会被**重建**，识别框是**新元素**，
+   挂在旧元素上的状态就丢了 → 停止听写的重播直接落到新框上、又存一条 ✗。
+   所以按"表 id"归属存模块级变量，跨弹窗重建依然有效。 */
+const REPLAY_WINDOW_MS = 15000;
+let _smartHandled = { tableId:null, frags:[], raw:'', uid:'', until:0 };
+let _smartReplayToastAt = 0;      // 重播提示节流
+/* 取当前识别框所属的表 id（弹窗重建后依然是同一张表，所以守卫能接上） */
+function smartTableIdOf(box){
+  const form = box && box.closest ? box.closest('.rec-modal') : null;
+  return form ? form.dataset.table : null;
+}
 function smartNoteHandled(box, textBeforeClear){
   if(!box) return;
+  const tid = smartTableIdOf(box);
   const n = normSmartText(String(textBeforeClear || '').replace(/回车|清空/g, ''));
-  if(n) (box._handledFrags = box._handledFrags || []).push(n);
-  if(box._handledFrags && box._handledFrags.length > 12) box._handledFrags.shift();
-  box._handledRaw = box.value || '';                 // 记下"处理到哪儿了"，用来算新增部分
-  box._replayUntil = Date.now() + REPLAY_WINDOW_MS;
+  const prev = (_smartHandled.tableId === tid) ? _smartHandled.frags.slice() : [];
+  if(n) prev.push(n);
+  while(prev.length > 12) prev.shift();
+  _smartHandled = { tableId:tid, frags:prev, raw:(box.value||''), uid:(box._uid||''), until: Date.now() + REPLAY_WINDOW_MS };
 }
 /* 这批文字是不是"已经处理过的那批"（重播）？ */
 function smartIsReplay(box){
-  if(!box || !box._replayUntil || Date.now() > box._replayUntil) return false;
-  const frags = box._handledFrags;
+  if(!box || Date.now() > _smartHandled.until) return false;
+  const tid = smartTableIdOf(box);
+  if(!tid || _smartHandled.tableId !== tid) return false;
+  const frags = _smartHandled.frags;
   if(!frags || !frags.length) return false;
   let rest = normSmartText(smartBoxText(box)).replace(/回车|清空/g, '');
   if(!rest) return false;                            // 没实质内容 → 走正常流程（标点尾巴另有处理）
@@ -7677,7 +7691,9 @@ function smartIsReplay(box){
    识别时必须只用新增部分，否则旧内容会被再次解析并填进表单 ✗ */
 function smartPendingText(box){
   const raw = box ? (box.value || '') : '';
-  const cons = box && box._handledRaw;
+  // 识别框被重建过（保存后弹窗重建）→ 框里现在的东西都是"新"的，直接原样返回
+  if(!box || _smartHandled.tableId !== smartTableIdOf(box) || _smartHandled.uid !== (box._uid||'')) return raw;
+  const cons = _smartHandled.raw;
   if(cons == null || !cons.length) return raw;
   if(raw === cons) return '';
   const i = raw.indexOf(cons);
@@ -7688,9 +7704,17 @@ function smartPendingText(box){
   if(nC && nR.indexOf(nC) >= 0) return '';
   return raw;                                                      // 真的换了新内容
 }
-function clearSmartHandled(box){
-  if(!box) return;
-  box._handledFrags = null; box._handledRaw = null; box._replayUntil = 0;
+/* ── 内容级兜底：和"刚刚保存过的那条"内容完全一样 → 判定成重播，不再存 ──
+   万一 iOS 重播时把字重认了一遍（片段比对没命中），这一步还能拦住重复记录 ✓ */
+let _lastSavedSig = {};     // { [tableId]: { sig, at } }
+function smartRememberSaved(tid, sig){
+  if(tid && sig) _lastSavedSig[tid] = { sig:sig, at:Date.now() };
+}
+function smartSameAsLastSaved(tid, sig){
+  const e = _lastSavedSig[tid];
+  if(!e || !sig) return false;
+  if(Date.now() - e.at > REPLAY_WINDOW_MS) return false;
+  return e.sig === sig;
 }
 /* 识别框里"真正算数"的文字（见上面 ① 的说明） */
 function smartBoxText(box){
@@ -7979,7 +8003,7 @@ function parseDateCn(s){
   }
   return null;
 }
-const COMMON_SURNAMES = '赵钱孙李周吴郑王冯陈褚卫蒋沈韩杨朱秦尤许何吕施张孔曹严华金魏陶姜戚谢邹喻柏水窦章云苏潘葛奚范彭郎鲁韦昌马苗凤花方俞任袁柳酆鲍史唐费廉岑薛雷贺倪汤滕殷罗毕郝邬安常乐于时傅皮卞齐康伍余元卜顾孟平黄和穆萧尹姚邵湛汪祁毛禹狄米贝明臧计伏成戴谈宋茅庞熊纪舒屈项祝董梁杜阮蓝闵席季麻强贾路娄危江童颜郭梅盛林刁钟徐邱骆高夏蔡田樊胡凌霍虞万支柯昝管卢莫经房裘缪干解应宗丁宣贲邓郁单杭洪包诸左石崔吉钮龚程嵇邢滑裴陆荣翁荀羊於惠甄曲家封芮羿储靳汲邴糜松井段富巫乌焦巴弓牧隗山谷车侯宓蓬全郗班仰秋仲伊宫宁仇栾暴甘钭厉戎祖武符刘景詹束龙叶幸司韶郜黎蓟薄印宿白怀蒲邰从鄂索咸籍赖卓蔺屠蒙池乔阴郁胥能苍双闻莘党翟谭贡劳逄姬申扶堵冉宰郦雍却璩桑桂濮牛寿通边扈燕冀郏浦尚农温别庄晏柴瞿阎充慕连茹习宦艾鱼容向古易慎戈廖庾终暨居衡步都耿满弘匡国文寇广禄阙东欧殳沃利蔚越夔隆师巩厍聂晁勾敖融冷訾辛阚那简饶空曾毋沙乜养鞠须丰巢关蒯相查后荆红游竺权逯盖益桓公兰官练';
+const COMMON_SURNAMES = '赵钱孙李周吴郑王冯陈褚卫蒋沈韩杨朱秦尤许何吕施张孔曹严华金魏陶姜戚谢邹喻柏水窦章云苏潘葛奚范彭郎鲁韦昌马苗凤花方俞任袁柳酆鲍史唐费廉岑薛雷贺倪汤滕殷罗毕郝邬安常乐于时傅皮卞齐康伍余元卜顾孟平黄和穆萧尹姚邵湛汪祁毛禹狄米贝明臧计伏成戴谈宋茅庞熊纪舒屈项祝董梁杜阮蓝闵席季麻强贾路娄危江童颜郭梅盛林刁钟徐邱骆高夏蔡田樊胡凌霍虞万支柯昝管卢莫经房裘缪干解应宗丁宣贲邓郁单杭洪包诸左石崔吉钮龚程嵇邢滑裴陆荣翁荀羊於惠甄曲家封芮羿储靳汲邴糜松井段富巫乌焦巴弓牧隗山谷车侯宓蓬全郗班仰秋仲伊宫宁仇栾暴甘钭厉戎祖武符刘景詹束龙叶幸司韶郜黎蓟薄印宿白怀蒲邰从鄂索咸籍赖卓蔺屠蒙池乔阴郁胥能苍双闻莘党翟谭贡劳逄姬申扶堵冉宰郦雍却璩桑桂濮牛寿通边扈燕冀郏浦尚农温别庄晏柴瞿阎充慕连茹习宦艾鱼容向古易慎戈廖庾终暨居衡步都耿满弘匡国文寇广禄阙东欧殳沃利蔚越夔隆师巩厍聂晁勾敖融冷訾辛阚那简饶空曾毋沙乜养鞠须丰巢关蒯相查后荆红游竺权逯盖益桓公兰官练涂肖';
 const COMPOUND_SURNAMES = ['欧阳','司马','诸葛','上官','夏侯','东方','皇甫','尉迟','公孙','慕容','长孙','宇文','司徒','司空','闾丘','子车','亓官','司寇','巫马','公西','颛孙','壤驷','公良','漆雕','乐正','宰父','谷梁','拓跋','夹谷','轩辕','令狐','段干','百里','呼延','东郭','南门','羊舌','微生','公户','公玉','公仪','梁丘','公仲','公上','公门','公山','公坚','左丘','公伯','西门','公祖','第五','公乘','贯丘','公皙','南荣','东里','东宫','仲长','子书','子桑','即墨','达奚','褚师'];
 function isNameWord(w){
   if(!w || w.length < 2 || w.length > 4) return false;
@@ -8338,6 +8362,8 @@ function runSmartFill(tableId, textOverride){
 function bindSmartInput(){
   const box = document.getElementById('smart-input');
   if(!box) return;
+  // 识别框的唯一标识：用来判断"这个框是不是保存前那个框"（保存后弹窗重建 → 是新框）
+  if(!box._uid) box._uid = 'sb' + Math.random().toString(36).slice(2);
   box.addEventListener('input', ()=>{
     clearTimeout(box._t);
     vlog('input 长度=' + (box.value||'').length + (box._pendingClear ? '（待清空，旧文字还在框里）' : ''));
@@ -8347,17 +8373,9 @@ function bindSmartInput(){
       syncSmartMirror();
       return;
     }
-    // ── 停止听写时的"整段重播"守卫 ─────────────────────────────────────
-    // 说「回车」保存后识别框被清空，但 iOS 在你停止听写时会把刚才那批文字重新提交一遍，
-    // 于是「回车」被二次执行 → 又存一条；"清空 → 新内容 → 回车"时还会把被清空的旧内容
-    // 一起带回来存成第二条 ✗。这里整批忽略（详见 smartIsReplay 的说明）。
-    if(smartIsReplay(box)){
-      vlog('识别框：这批文字是"已处理过的重播" → 整批忽略');
-      clearTimeout(box._t);
-      syncSmartMirror();
-      return;
-    }
     // 智能识别：出现"清空"二字 → 清空识别框（不再解析）
+    // ⚠️ 重播守卫**不**拦这一步：清空是幂等的、重放一次没有副作用（不会多存记录），
+    //    而拦它反而会误伤 —— 用户刚说过内容、紧接着说"清空"时会被整批丢掉 ✗
     if(smartHasClearCmd(box.value)){
       clearTimeout(box._t);
       smartNoteHandled(box, smartBoxText(box));     // 记下"这批已处理"（要在清空之前取）
@@ -8372,6 +8390,23 @@ function bindSmartInput(){
     }
     // 智能识别：含"回车"二字时去掉它并直接保存，方便连续录入
     if(/回车/.test(smartBoxText(box))){
+      // ── 停止听写时的"整段重播"守卫 ─────────────────────────────────────
+      // 说「回车」保存后识别框被清空，但 iOS 在你停止听写时会把刚才那批文字重新提交一遍，
+      // 于是「回车」被二次执行 → 又存一条；"清空 → 新内容 → 回车"时还会把被清空的旧内容
+      // 一起带回来存成第二条 ✗。整批忽略（详见 smartIsReplay 的说明）。
+      // ⚠️ 只守「回车」这一步 —— 清空那一步是幂等的，拦它只会误伤（见上面的注释）
+      if(smartIsReplay(box)){
+        vlog('识别框：这批文字是"已处理过的重播" → 整批忽略');
+        clearTimeout(box._t);
+        // 给个提示（2 秒内只提示一次，免得一批重播刷出一堆）：既是"没重复存"的确认，
+        // 也告诉真想再存一条一模一样的人"点「添加记录」"这个出口
+        if(Date.now() - (_smartReplayToastAt || 0) > 2000){
+          _smartReplayToastAt = Date.now();
+          toast('刚保存过相同内容，已跳过（要再存一条请点「添加记录」）');
+        }
+        syncSmartMirror();
+        return;
+      }
       const form = box.closest('.rec-modal');
       const tid = form && form.dataset.table;
       // 顺序很重要：先把"回车"二字去掉、把要识别的文字记下来，**再**清空识别框。
@@ -8391,17 +8426,25 @@ function bindSmartInput(){
       box._clearAt = Date.now();
       if(tid){
         const filled = runSmartFill(tid, keep);   // 用去掉"回车"后的文字识别（框已清，只能从参数传）
+        const sigNow = recordFormSignature(tid);
         // 表单没有任何变化 → 别保存（否则听写尾巴再冒出一个"回车"就会存一条空记录 ✗）
-        if(filled <= 0 && beforeSig && beforeSig === recordFormSignature(tid)){
+        if(filled <= 0 && beforeSig && beforeSig === sigNow){
           toast('识别框是空的，没有内容可保存（要强制保存请点「添加记录」）');
           enterGateClear();               // 这次没保存，放开闸门 —— 别让"空回车"挡住紧接着的正常回车
+          return;
+        }
+        // 内容级兜底：和"刚刚保存过的那条"一模一样 → 判定成停止听写的重播，不再存 ✗
+        // （只对"新建记录"生效；编辑已有记录时允许重复保存同样的内容）
+        if(filled > 0 && !form.dataset.rowid && smartSameAsLastSaved(tid, sigNow)){
+          vlog('内容与刚保存的那条完全相同 → 跳过（判定为重播）');
+          toast('这条和刚保存的那条内容相同，已跳过（避免重复录入）');
           return;
         }
         setTimeout(()=>{
           const saved = saveRecord(tid, form.dataset.rowid || '');
           // 真存下来了才落冷却（enterGateDone）；被校验拦下或判定成重复 → 放开闸门，
           // 否则用户补完必填项再按回车会被当成重复丢掉 ✗
-          if(saved === true) enterGateDone(tid, uid);
+          if(saved === true){ enterGateDone(tid, uid); smartRememberSaved(tid, sigNow); }
           else enterGateClear();
         }, 200);
         return;
