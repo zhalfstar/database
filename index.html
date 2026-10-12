@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-12.4</title>
+<title>轻量数据库 · v2026-10-12.5</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.4">v2026-10-12.4</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.5">v2026-10-12.5</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5075,7 +5075,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.4</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.5</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7675,17 +7675,49 @@ function smartNoteHandled(box, textBeforeClear){
   while(prev.length > 12) prev.shift();
   _smartHandled = { tableId:tid, frags:prev, raw:(box.value||''), uid:(box._uid||''), until: Date.now() + REPLAY_WINDOW_MS };
 }
-/* 这批文字是不是"已经处理过的那批"（重播）？ */
+/* 在**归一化**文本里剥掉已处理的片段，允许"近似"命中 ——
+   iOS 停止听写重播时会把字重认一遍（常只差一两个字），只按完全相等剥会漏 ✗。
+   返回 { rest, hit }：rest 是剥完剩下的、hit 是命中了几条。 */
+function stripFragsSmart(nText, frags){
+  let rest = String(nText == null ? '' : nText), hit = 0, fuzzy = 0;
+  const list = (frags || []).slice().sort((a,b)=>b.length-a.length);
+  for(const f of list){
+    if(!f || f.length < 2) continue;
+    let i = rest.indexOf(f);
+    if(i >= 0){ rest = rest.slice(0, i) + rest.slice(i + f.length); hit++; continue; }
+    const L = f.length;
+    let at = -1, atLen = 0;
+    for(let k = 0; k + 2 <= rest.length && at < 0; k++){
+      for(const w of [L, L-1, L+1]){
+        if(w < 2 || k + w > rest.length) continue;
+        if(smartTextSimilar(rest.substr(k, w), f)){ at = k; atLen = w; break; }
+      }
+    }
+    if(at >= 0){ rest = rest.slice(0, at) + rest.slice(at + atLen); hit++; fuzzy++; }
+  }
+  return { rest: rest, hit: hit, fuzzy: fuzzy };
+}
+/* 这批文字是不是"已经处理过的那批"（重播）？
+   ⚠️ 判据用**识别框原文**（`box.value`）而不是 `smartBoxText()` ✗ ——
+   `smartBoxText()` 在"整段重播（好几条）"时会返回**前几条那部分**（因为最后一条在末尾），
+   拿它判断会把重播当成新内容放过去 ✗。原文里把指令词和**所有**已处理片段都剥掉，
+   剥完什么都不剩 → 整批都是已处理过的 → 重播 ✓ */
 function smartIsReplay(box){
-  if(!box || Date.now() > _smartHandled.until) return false;
+  if(!box) return false;
   const tid = smartTableIdOf(box);
   if(!tid || _smartHandled.tableId !== tid) return false;
   const frags = _smartHandled.frags;
   if(!frags || !frags.length) return false;
-  let rest = normSmartText(smartBoxText(box)).replace(/回车|清空/g, '');
-  if(!rest) return false;                            // 没实质内容 → 走正常流程（标点尾巴另有处理）
-  for(const f of frags){ if(f) rest = rest.split(f).join(''); }
-  return rest.length === 0;
+  const rest0 = normSmartText(box.value || '').replace(/回车|清空/g, '');
+  if(!rest0) return false;                           // 没实质内容 → 走正常流程（标点尾巴另有处理）
+  const r = stripFragsSmart(rest0, frags);
+  if(r.rest.length !== 0) return false;              // 还剩下没处理过的内容 → 不是重播
+  // ⚠️ 用了"模糊命中"（重认过一两个字）时必须至少 2 条佐证 ✗ ——
+  //    否则"张三买书 → 张三买笔"这种正常的连续录入会被当成重播误杀
+  if(r.fuzzy > 0 && r.hit < 2) return false;
+  // 窗口内一律算重播；窗口外只有"包含≥2 条已处理内容"才算
+  //（避免过了很久之后，用户真的想再录一条一模一样的被误杀）
+  return Date.now() <= _smartHandled.until || r.hit >= 2;
 }
 /* 只取"上次处理之后新增的那部分"文字 —— 重播会把旧内容一起带回来，
    识别时必须只用新增部分，否则旧内容会被再次解析并填进表单 ✗ */
@@ -7716,16 +7748,32 @@ function smartPendingText(box){
       再按**相似度**兜一次 —— iOS 重认字常常只差一两个字，不能只比"完全相等" ✗ */
 const ECHO_WINDOW_MS = 8000;
 let _savedEcho = null;      // { tableId, norm, until }
-/* 归一化文本相似度：长度接近 + 逐位差异不超过 1/3（对齐比较，够抓"重认成一两个字不同"） */
+/* 归一化文本相似度：用**编辑距离**（不是逐位比较 —— 逐位比较遇到"中间多/少一个字"会整段错位，
+   把只差一个字的"张三风买书 / 张三买书"判成差两个 ✗）。差异比例 ≤ 1/3 视为同一批。 */
+function smartLev(a, b){
+  const m = a.length, n = b.length;
+  if(!m) return n;
+  if(!n) return m;
+  let prev = new Array(n+1);
+  for(let j=0;j<=n;j++) prev[j] = j;
+  for(let i=1;i<=m;i++){
+    const cur = new Array(n+1); cur[0] = i;
+    const ca = a[i-1];
+    for(let j=1;j<=n;j++){
+      const cost = ca === b[j-1] ? 0 : 1;
+      cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1]+cost);
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
 function smartTextSimilar(a, b){
   if(!a || !b) return false;
   if(a === b) return true;
-  if(Math.min(a.length, b.length) < 3) return false;              // 太短容易误判
+  const L = Math.max(a.length, b.length);
+  if(L < 3) return false;                                         // 太短容易误判
   if(Math.abs(a.length - b.length) > 2) return false;             // 长度差太多就不是同一批
-  let diff = Math.abs(a.length - b.length);
-  const n = Math.min(a.length, b.length);
-  for(let i=0;i<n;i++) if(a[i] !== b[i]) diff++;
-  return diff / Math.max(a.length, b.length) <= 0.34;
+  return smartLev(a, b) / L <= 0.34;
 }
 /* 保存成功后调用：给识别框挂"隐藏罩" + 记下回声指纹（弹窗重建也没关系，取当前那个框） */
 function smartArmSavedEcho(tableId, rawText){
@@ -7746,17 +7794,37 @@ function smartIsSavedEcho(nText){
   if(!e || !nText || Date.now() > e.until) return false;
   return smartTextSimilar(nText, e.norm);
 }
-/* ── 内容级兜底：和"刚刚保存过的那条"内容完全一样 → 判定成重播，不再存 ──
-   万一 iOS 重播时把字重认了一遍（片段比对没命中），这一步还能拦住重复记录 ✓ */
-let _lastSavedSig = {};     // { [tableId]: { sig, at } }
+/* 把"本会话里已经保存过的所有内容片段"从这段文字里剔掉 —— 识别时必须只看剩下的。
+   为什么需要：一次语音会话里连录几条后，iOS 停止听写会把**整段（好几条）**重新提交，
+   识别框里就出现"之前几条的内容"。只剔最后一条（_handledRaw）是不够的 ✗。
+   片段是归一化过的（没空格标点），所以按"字符之间允许隔最多 2 个分隔符"来匹配。 */
+function smartStripHandled(text){
+  const frags = ((_smartHandled && _smartHandled.frags) || []).slice().sort((a,b)=>b.length-a.length);
+  let out = String(text == null ? '' : text);
+  for(const f of frags){
+    if(!f || f.length < 2) continue;
+    const pat = f.split('').map(ch=>ch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('[\\s\\S]{0,2}?');
+    try{ out = out.replace(new RegExp(pat,'g'), ' '); }catch(e){}
+  }
+  return out;
+}
+/* ── 内容级兜底：和"刚刚保存过的**最近几条**"内容一样 → 判定成重播，不再存 ──
+   为什么要记最近几条（不是只记最后一条）：一次语音会话里连录几条后，停止听写会把
+   **整段（好几条）**重新提交，被重新识别出来的是**其中任意一条**，只比最后一条会漏 ✗ */
+const LAST_SAVED_KEEP = 6;
+let _lastSavedSig = {};     // { [tableId]: [{ sig, at }, ...] }
 function smartRememberSaved(tid, sig){
-  if(tid && sig) _lastSavedSig[tid] = { sig:sig, at:Date.now() };
+  if(!tid || !sig) return;
+  const arr = _lastSavedSig[tid] || (_lastSavedSig[tid] = []);
+  arr.push({ sig:sig, at:Date.now() });
+  while(arr.length > LAST_SAVED_KEEP) arr.shift();
 }
 function smartSameAsLastSaved(tid, sig){
-  const e = _lastSavedSig[tid];
-  if(!e || !sig) return false;
-  if(Date.now() - e.at > REPLAY_WINDOW_MS) return false;
-  return e.sig === sig;
+  if(!tid || !sig) return false;
+  const arr = _lastSavedSig[tid];
+  if(!arr || !arr.length) return false;
+  const now = Date.now();
+  return arr.some(e=>e.sig === sig && (now - e.at) <= REPLAY_WINDOW_MS);
 }
 /* 识别框里"真正算数"的文字（见上面 ① 的说明） */
 function smartBoxText(box){
@@ -7812,8 +7880,8 @@ function syncSmartMirror(){
   m.style.top    = (r.top  - w.top  - bt) + 'px';
   m.style.width  = r.width  + 'px';
   m.style.height = r.height + 'px';
-  const txt = smartBoxText(box);
-  m.innerHTML = txt ? esc(txt) : '<span class="sm-ph">已清空，继续说…</span>';
+  const txt = smartStripHandled(smartBoxText(box));
+  m.innerHTML = txt.trim() ? esc(txt) : '<span class="sm-ph">已清空，继续说…</span>';
   m.scrollTop = box.scrollTop;
 }
 /* 点「清空」按钮：用户主动点的，听写已经结束 → 硬清空 */
@@ -8447,6 +8515,15 @@ function bindSmartInput(){
       if(smartIsReplay(box) || smartIsSavedEcho(normSmartText(smartBoxText(box)))){
         vlog('识别框：这批文字是"已处理过/刚保存过的重播" → 整批忽略');
         clearTimeout(box._t);
+        // 把这**整批**也记成"已处理"，并把隐藏罩更新到整批 ——
+        // 否则"整段重播（好几条）"里前几条会一直漏在外面，反复被识别 ✗
+        if(box.value){
+          box._pendingClear = true;
+          box._clearedSnapshot = box.value;
+          _smartHandled.raw = box.value;
+          _smartHandled.until = Date.now() + REPLAY_WINDOW_MS;
+          try{ if(typeof box.select === 'function') box.select(); }catch(e){}
+        }
         // 给个提示（2 秒内只提示一次，免得一批重播刷出一堆）：既是"没重复存"的确认，
         // 也告诉真想再存一条一模一样的人"点「添加记录」"这个出口
         if(Date.now() - (_smartReplayToastAt || 0) > 2000){
@@ -8463,7 +8540,9 @@ function bindSmartInput(){
       // ⚠️ 用 smartPendingText 而不是 smartBoxText：重播会把旧内容一起带回来，
       //    只取"上次处理之后新增的部分"去识别，否则旧内容会被再次填进表单 ✗
       //    （不要加 "为空就退回 smartBoxText" 的兜底 —— 那正好会把旧内容又解析一遍 ✗）
-      const keep = smartPendingText(box).replace(/回车/g, '').trim();
+      // ⚠️ 再用 smartStripHandled 把"本会话里已保存过的**所有**片段"剔掉 ——
+      //    "整段重播（好几条）"时前几条会漏在前面，只剔最后一条不够 ✗
+      const keep = smartStripHandled(smartPendingText(box)).replace(/回车/g, '').trim();
       // ⚠️ 闸门必须在**任何副作用之前**过（它自己记"保存前"的指纹）——
       //    否则第二次进来时表单已被 runSmartFill 改过，指纹兜底就失效了 ✗
       const uid = box._uid || (box._uid = 'sb' + Math.random().toString(36).slice(2));
@@ -8517,8 +8596,8 @@ function bindSmartInput(){
       // ⭐ 刚保存完，框里这段又跟"刚保存的那批"高度相似 → 多半是停止听写时的重播，
       //    别自动识别 —— 否则会把刚存过的记录**重新填回表单**，下一次保存就又存一遍 ✗
       //    （只压"自动识别"这一步；用户真要说一条很像的新记录，说「回车」照样能存）
-      if(smartIsSavedEcho(normSmartText(smartBoxText(box)))){
-        vlog('自动识别：与刚保存的内容高度相似 → 跳过自动填入（防重播）');
+      if(smartIsReplay(box) || smartIsSavedEcho(normSmartText(smartBoxText(box)))){
+        vlog('自动识别：这批是已保存过/刚保存过的内容 → 跳过自动填入（防重播）');
         return;
       }
       runSmartFill(form.dataset.table);
@@ -8536,10 +8615,10 @@ function bindSmartInput(){
         // ⭐ 这里也必须防重播 ✗ —— 停止听写/弹窗重建都会让识别框失焦，
         //    此时框里若是"刚保存过的那批"（重播），绝不能再去识别一遍，
         //    否则刚存的记录会被重新填回表单、下一次保存又存一遍 ✗
-        if(form && form.dataset.table && t.trim() && !smartIsSavedEcho(normSmartText(t))){
+        if(form && form.dataset.table && t.trim() && !smartIsReplay(box) && !smartIsSavedEcho(normSmartText(t))){
           runSmartFill(form.dataset.table);
         } else if(t.trim()){
-          vlog('失焦解析：与刚保存的内容高度相似 → 跳过（防重播）');
+          vlog('失焦解析：这批是已保存过/刚保存过的内容 → 跳过（防重播）');
         }
       }catch(e){}
       hardClearInput(box);
