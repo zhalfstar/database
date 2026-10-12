@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-12.7</title>
+<title>轻量数据库 · v2026-10-12.8</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.7">v2026-10-12.7</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.8">v2026-10-12.8</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5075,7 +5075,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.7</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.8</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7670,10 +7670,16 @@ function smartNoteHandled(box, textBeforeClear){
   if(!box) return;
   const tid = smartTableIdOf(box);
   const n = normSmartText(String(textBeforeClear || '').replace(/回车|清空/g, ''));
-  const prev = (_smartHandled.tableId === tid) ? _smartHandled.frags.slice() : [];
+  const same = (_smartHandled.tableId === tid);
+  const prev = same ? _smartHandled.frags.slice() : [];
   if(n) prev.push(n);
   while(prev.length > 12) prev.shift();
-  _smartHandled = { tableId:tid, frags:prev, raw:(box.value||''), uid:(box._uid||''), until: Date.now() + REPLAY_WINDOW_MS };
+  _smartHandled = {
+    tableId:tid, frags:prev, raw:(box.value||''), uid:(box._uid||''),
+    until: Date.now() + REPLAY_WINDOW_MS,
+    enters: same ? (_smartHandled.enters || 0) : 0,        // ⚠️ 不能冲掉游标
+    tailSig: same ? (_smartHandled.tailSig || '') : ''
+  };
 }
 /* 在**归一化**文本里剥掉已处理的片段，允许"近似"命中 ——
    iOS 停止听写重播时会把字重认一遍（常只差一两个字），只按完全相等剥会漏 ✗。
@@ -7797,6 +7803,36 @@ function smartIsSavedEcho(nText){
   //    所以阈值可以放宽（重认过一两个字也算）；就算误判，也只是"实时预览没填"，
   //    用户说「回车」照样能存（识别用的是 keep，不走这个判断）✓
   return smartTextSimilar(nText, e.norm);
+}
+/* ── 用「回车」的个数当边界（不再靠比对文字）────────────────────────────
+   为什么必须换：真机日志实证 —— iOS 听写会**周期性把整段删光再重新插入一个"修订版"**，
+   而且修订版里旧记录的文字**会被改掉**（「吓人的吓死扶太岁，五鬼太岁」→「死符太岁、五鬼太岁」）。
+   所以"把已保存过的内容从文字里剔掉"永远剔不干净：对不上就留下残渣，
+   残渣被当成新记录存进去 ✗（真机日志里 `待识别=len=11 "，。叶美 ，。 ，。。"` 就是它）。
+   但「回车」是稳定的：说了几条就有几个「回车」。
+   于是：记住"已经消费过几个回车"，下一次**只取第 N 个回车之后**的那一段。
+   `parts = raw.split('回车')`：parts[i] = 第 i 个回车与第 i+1 个回车之间的内容，
+   parts[K] = 最后一个回车之后的内容。已消费 N 段 → 当前段就是 parts[N]。 */
+function smartSegmentByEnters(box){
+  const raw = box ? (box.value || '') : '';
+  const tid = smartTableIdOf(box);
+  if(!tid) return { text:'', raw:raw, K:0, idx:-1, norm:'' };
+  if(_smartHandled.tableId !== tid) _smartHandled = { tableId:tid, frags:[], raw:'', uid:'', until:0, enters:0, tailSig:'' };
+  const parts = raw.split(/回车/);
+  const K = parts.length - 1;                       // 这段文字里有几个「回车」
+  const consumed = _smartHandled.enters || 0;
+  const idx = Math.min(consumed, K);                // 取"第 N 个回车之后"那段
+  let text = parts[idx] || '';
+  const n = normSmartText(text.replace(/回车|清空/g, ''));
+  // 尾巴（后面没有回车了）且已经消费过同样内容 → 不重复处理（文字被重写但内容没变）
+  if(idx === K && consumed >= K && n && n === (_smartHandled.tailSig || '')) text = '';
+  return { text: text, raw: raw, K: K, idx: idx, norm: n };
+}
+/* 这段处理完之后推进"已消费"游标 */
+function smartConsumeSegment(seg){
+  if(!seg || seg.idx < 0) return;
+  if(seg.idx < seg.K) _smartHandled.enters = seg.idx + 1;   // 后面还有回车 → 消费掉这一段
+  else _smartHandled.tailSig = seg.norm;                    // 这是尾巴 → 记下已消费
 }
 /* 把"本会话里已经保存过的所有内容片段"从这段文字里剔掉 —— 识别时必须只看剩下的。
    为什么需要：一次语音会话里连录几条后，iOS 停止听写会把**整段（好几条）**重新提交，
@@ -7971,6 +8007,7 @@ function markRecordBase(tableId){
   const m = document.querySelector('#modal-root .modal.rec-modal');
   if(!m) return;
   m.dataset.baseSig = recordFormSignature(tableId || m.dataset.table || '');
+  m.dataset.autoFilled = '';        // 表单刚重置 → 清掉"自动填入"标记
 }
 /* ── 说一次「回车」只能保存一次（防重复保存）──────────────────────────────
    问题：识别框的 input 处理器遇到含"回车"的文字就 `setTimeout(()=>saveRecord(...), 200)`。
@@ -8247,6 +8284,9 @@ function runSmartFill(tableId, textOverride){
         // 程序赋值不触发 input 事件，手动打标，避免被防自动填充的清理逻辑误清空
         el.dataset.filled = '1';
       }
+      // 打标：这个表单的当前内容是"自动识别填进去的"（不是用户手打的）
+      // —— 后面"识别不到内容时要不要保存"要靠它区分：自动填的不能被再存一遍 ✗
+      try{ const fm = el.closest('.rec-modal'); if(fm) fm.dataset.autoFilled = '1'; }catch(e){}
       filled++;
       return;
     }
@@ -8489,6 +8529,20 @@ function runSmartFill(tableId, textOverride){
 function bindSmartInput(){
   const box = document.getElementById('smart-input');
   if(!box) return;
+  // 用户**手动**改过任一字段 → 清掉"自动填入"标记（空回车能不能保存要靠它区分）
+  if(!document._fieldManualBound){
+    document._fieldManualBound = true;
+    const markManual = e=>{
+      const t = e.target;
+      if(!t || !t.closest) return;
+      const el = t.closest('#modal-root [data-fid]');
+      if(!el) return;
+      const fm = el.closest('.rec-modal');
+      if(fm) fm.dataset.autoFilled = '';
+    };
+    document.addEventListener('input', markManual, true);
+    document.addEventListener('change', markManual, true);
+  }
   // 识别框的唯一标识：用来判断"这个框是不是保存前那个框"（保存后弹窗重建 → 是新框）
   if(!box._uid) box._uid = 'sb' + Math.random().toString(36).slice(2);
   box.addEventListener('input', ()=>{
@@ -8551,13 +8605,29 @@ function bindSmartInput(){
       const tid = form && form.dataset.table;
       // 顺序很重要：先把"回车"二字去掉、把要识别的文字记下来，**再**清空识别框。
       // 清空走 clearInputKeepVoice（按当前「清空方式」），尽量不打断听写。
-      // ⚠️ 用 smartPendingText 而不是 smartBoxText：重播会把旧内容一起带回来，
-      //    只取"上次处理之后新增的部分"去识别，否则旧内容会被再次填进表单 ✗
-      //    （不要加 "为空就退回 smartBoxText" 的兜底 —— 那正好会把旧内容又解析一遍 ✗）
-      // ⚠️ 再用 smartStripHandled 把"本会话里已保存过的**所有**片段"剔掉 ——
-      //    "整段重播（好几条）"时前几条会漏在前面，只剔最后一条不够 ✗
-      const keep = smartStripHandled(smartPendingText(box)).replace(/回车/g, '').trim();
-      vlog('回车：原文=' + vlogText(box.value) + ' | 待识别=' + vlogText(keep)
+      // ⭐ 当前这句 = **最后一个「回车」周围**那一小段：
+      //    ① 文字以「回车」结尾（正常：说完一条就说回车）→ 取**它前面**那段
+      //    ② 文字不以「回车」结尾（后面还有话 / 识别器把整段重写了）→ 取**它后面**那段
+      //    为什么必须这么切：识别器会把**整段（好几条）**重新提交，且旧记录的文字**会被改写**，
+      //    所以"把已保存内容从整段里剔掉"永远剔不干净 → 残留里带着**第 1 条** →
+      //    解析时取"第一个像姓名的内容" → 就存出"和第一条一样"的重复记录 ✗
+      //    （真机实测：`吴声阳/李四/王五` 三条 → 整段重写后变成 `吴声阳/李四/王五/吴声阳`）
+      //    切到"最后一个回车附近"，前面几条压根不进解析范围 ✓
+      const rawNow = box.value || '';
+      const enterParts = rawNow.split(/回车/);
+      const endsWithEnter = /回车[\s。.，,、]*$/.test(rawNow);
+      let segNow = endsWithEnter ? enterParts[enterParts.length - 2] : enterParts[enterParts.length - 1];
+      if(segNow == null) segNow = '';
+      const keep0 = smartStripHandled(segNow).replace(/回车/g, '').trim();
+      // ⭐ 剔除后若只剩"残渣"（几乎全是标点）→ 当成没有内容。
+      //    真机日志实证：识别器"整段改写"时会把旧记录的文字改掉，对不上就留下残渣
+      //    （`待识别=len=11 "，。叶美 ，。 ，。。"`），残渣被解析出来就是一条错记录 ✗
+      const meaningful = keep0.replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, '');
+      const rawLen = String(box.value || '').replace(/\s/g, '').length;
+      const leftover = meaningful.length < 3 && rawLen > meaningful.length * 4;
+      const keep = leftover ? '' : keep0;
+      vlog('回车：原文=' + vlogText(box.value) + ' | 切到' + (endsWithEnter ? '回车前' : '回车后')
+           + ' | 待识别=' + vlogText(keep) + (leftover ? '（只剩残渣→当空）' : '')
            + ' | 已保存片段=' + (((_smartHandled && _smartHandled.frags) || []).length) + '条');
       // ⚠️ 闸门必须在**任何副作用之前**过（它自己记"保存前"的指纹）——
       //    否则第二次进来时表单已被 runSmartFill 改过，指纹兜底就失效了 ✗
@@ -8572,9 +8642,16 @@ function bindSmartInput(){
       if(tid){
         const filled = runSmartFill(tid, keep);   // 用去掉"回车"后的文字识别（框已清，只能从参数传）
         const sigNow = recordFormSignature(tid);
-        // 表单没有任何变化 → 别保存（否则听写尾巴再冒出一个"回车"就会存一条空记录 ✗）
-        if(filled <= 0 && beforeSig && beforeSig === sigNow){
-          toast('识别框是空的，没有内容可保存（要强制保存请点「添加记录」）');
+        // ⭐ 识别不到任何内容时**不保存** ✗ —— 除非表单是用户**手动**填的。
+        //    真机日志实证：`待识别=len=0 ""` 紧接着却是 `保存后：已给识别框挂上隐藏罩`
+        //    —— 因为表单里残留着上一条**被自动填入**的内容，代码就把它又存了一遍 ✗
+        //    所以：① 表单跟基准一样（压根没内容）→ 不存；
+        //          ② 表单内容是**自动识别填进去的**（autoFilled）→ 也不存（不能把旧内容再存一遍）；
+        //          ③ 用户**手打**过字段 → 照常保存（这是正常用法，必须保留）✓
+        const manualFilled = form && form.dataset.autoFilled !== '1';
+        if(filled <= 0 && !(manualFilled && beforeSig && beforeSig !== sigNow)){
+          vlog('回车：识别不到新内容 → 不保存（表单未手填）');
+          toast('没有识别到内容，已跳过（要强制保存请点「添加记录」）');
           enterGateClear();               // 这次没保存，放开闸门 —— 别让"空回车"挡住紧接着的正常回车
           return;
         }
