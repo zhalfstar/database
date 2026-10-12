@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-12.6</title>
+<title>轻量数据库 · v2026-10-12.7</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.6">v2026-10-12.6</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.7">v2026-10-12.7</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -4013,7 +4013,7 @@ function viewDiagSnapshot(){
 function openViewDiag(){
   const rows = Object.entries(viewDiagSnapshot())
     .map(([k,v])=>`<div class="diag-row"><span class="diag-k">${esc(k)}</span><span class="diag-v">${esc(String(v))}</span></div>`).join('');
-  const logLines = (window._voiceLog || []).slice(-14);
+  const logLines = (window._voiceLog || []).slice(-40);
   const logRows = logLines.length
     ? logLines.map(x=>`<div class="diag-row"><span class="diag-v">${esc(x)}</span></div>`).join('')
     : '<div class="diag-row"><span class="muted">（还没有记录）</span></div>';
@@ -4051,7 +4051,7 @@ function resetViewNow(){
 }
 function copyViewDiag(btn){
   const txt = Object.entries(viewDiagSnapshot()).map(([k,v])=>k+': '+v).join('\n')
-    + '\n--- 语音/焦点日志 ---\n' + ((window._voiceLog || []).slice(-20).join('\n') || '（空）');
+    + '\n--- 语音/焦点日志（最近 150 条）---\n' + ((window._voiceLog || []).slice(-150).join('\n') || '（空）');
   const done = ()=>{ if(btn) btn.textContent = '已复制'; };
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(done).catch(()=>{ toast('复制失败，请直接截图'); });
@@ -5075,7 +5075,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.6</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.7</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7896,6 +7896,12 @@ function clearSmartBox(){
   hardClearInput(b);
   if(document.activeElement !== b) b.focus();
 }
+/* 把一段文字记进语音日志：给出总长度 + 头尾各 24 字（重播的内容往往很长，只看长度看不出问题）*/
+function vlogText(s){
+  const t = String(s == null ? '' : s);
+  if(t.length <= 51) return 'len=' + t.length + ' "' + t + '"';
+  return 'len=' + t.length + ' "' + t.slice(0,24) + ' … ' + t.slice(-24) + '"';
+}
 /* ===== 语音/焦点日志：只留最近 40 条，用于在真机上定位"语音为什么停" ===== */
 function vlog(msg){
   try{
@@ -7903,7 +7909,7 @@ function vlog(msg){
     const pad = (x,w)=>String(x).padStart(w,'0');
     const ts = pad(d.getMinutes(),2)+':'+pad(d.getSeconds(),2)+'.'+pad(d.getMilliseconds(),3);
     (window._voiceLog = window._voiceLog || []).push(ts+' '+msg);
-    if(window._voiceLog.length > 40) window._voiceLog.shift();
+    if(window._voiceLog.length > 200) window._voiceLog.shift();
   }catch(e){}
 }
 // 清空指令：同时把已识别填入表单的内容重置为初始（未填）状态
@@ -8487,7 +8493,7 @@ function bindSmartInput(){
   if(!box._uid) box._uid = 'sb' + Math.random().toString(36).slice(2);
   box.addEventListener('input', ()=>{
     clearTimeout(box._t);
-    vlog('input 长度=' + (box.value||'').length + (box._pendingClear ? '（待清空，旧文字还在框里）' : ''));
+    vlog('input ' + vlogText(box.value) + (box._pendingClear ? '（待清空，旧文字还在框里）' : ''));
     // 清空指令后的语音尾巴（如句号）自动再清，避免残留
     if(box._tailUntil && Date.now() < box._tailUntil && /^[\s。.，,、！!？?；;：:""''""''（）()]*$/.test(box.value)){
       clearInputKeepVoice(box);                     // 仍然不写 value，只重新全选
@@ -8551,6 +8557,8 @@ function bindSmartInput(){
       // ⚠️ 再用 smartStripHandled 把"本会话里已保存过的**所有**片段"剔掉 ——
       //    "整段重播（好几条）"时前几条会漏在前面，只剔最后一条不够 ✗
       const keep = smartStripHandled(smartPendingText(box)).replace(/回车/g, '').trim();
+      vlog('回车：原文=' + vlogText(box.value) + ' | 待识别=' + vlogText(keep)
+           + ' | 已保存片段=' + (((_smartHandled && _smartHandled.frags) || []).length) + '条');
       // ⚠️ 闸门必须在**任何副作用之前**过（它自己记"保存前"的指纹）——
       //    否则第二次进来时表单已被 runSmartFill 改过，指纹兜底就失效了 ✗
       const uid = box._uid || (box._uid = 'sb' + Math.random().toString(36).slice(2));
@@ -8637,10 +8645,17 @@ function bindSmartInput(){
   ['focus','blur','beforeinput','compositionstart','compositionend'].forEach(t=>{
     box.addEventListener(t, e=>{
       let extra = '';
-      if(t === 'beforeinput' && e && e.inputType) extra = '（' + e.inputType + '）';
+      if(t === 'beforeinput'){
+        // ⭐ 关键：记下"这次要插入什么内容"（e.data）—— 停止听写时的整段重播会在这里现形
+        extra = '（' + ((e && e.inputType) || '?') + '）';
+        if(e && e.data != null) extra += ' data=' + vlogText(e.data);
+      }
+      if(t === 'focus' || t === 'blur'){
+        extra += ' 框里=' + vlogText(box.value);
+      }
       if(t === 'blur'){
         const a = document.activeElement;
-        extra = '（焦点转到 ' + (a ? (a.id ? '#'+a.id : a.tagName) : '空') + '）';
+        extra += '（焦点转到 ' + (a ? (a.id ? '#'+a.id : a.tagName) : '空') + '）';
       }
       vlog(t + extra);
     });
