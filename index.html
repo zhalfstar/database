@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-11.3</title>
+<title>轻量数据库 · v2026-10-12.1</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -905,7 +905,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-11.3">v2026-10-11.3</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.1">v2026-10-12.1</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5017,7 +5017,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>新建记录</b>：点击"新建记录"，在识别框粘贴整段文字自动识别填入</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>智能识别</b>：输入"张三 1380000 广州"自动提取姓名、电话、城市</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>说「清空」重置</b>：在识别框里说（或打）"清空"，就把识别框和已填入的内容一起清掉，方便连续录入。清空有两种方式，可在「更多 → 清空方式」里切：<b>直接抹掉</b>（默认，旧文字真的删掉）／<b>保留隐藏</b>（一个字都不改，只把旧文字藏起来 —— 用手机键盘听写时最不容易打断语音；藏起来的旧文字不会再冒出来，等你点别处或保存时才真正删掉）</p>'+
-    '<p style="margin:4px 0;font-size:13px">• <b>说「回车」保存并接着录</b>：一条说完说"回车"，自动识别、保存、继续录下一条。识别框是空的（或表单没任何改动）时<b>不会存空记录</b>，要强制保存请点「添加记录」；保存后识别框里残留的句号等标点会自动清掉</p><p style="margin:4px 0;font-size:13px">• <b>「回车」防重复</b>：语音有时会把一次「回车」识别两次，或上一次的听写尾巴 + 下一次开头都带了「回车」。系统会自动合并 —— <b>短时间内重复出现的「回车」只执行一次保存</b>，不会一次说出一串"回车"就存出好几条；正常一条一条说、间隔一两秒的连续录入不受影响</p><p style="margin:4px 0;font-size:13px">• <b>连续语音输入</b>（新建记录弹窗底部的开关）：开着时，说「回车」保存后弹窗<b>不重建</b>，手机键盘不收起、语音听写不中断，可以一直说下去；关掉则按老方式（保存后重建弹窗，键盘会收起）</p>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>说「回车」保存并接着录</b>：一条说完说"回车"，自动识别、保存、继续录下一条。识别框是空的（或表单没任何改动）时<b>不会存空记录</b>，要强制保存请点「添加记录」；保存后识别框里残留的句号等标点会自动清掉</p><p style="margin:4px 0;font-size:13px">• <b>「回车」防重复</b>：语音有时会把一次「回车」识别两次，或上一次的听写尾巴 + 下一次开头都带了「回车」。系统会自动合并 —— <b>短时间内重复出现的「回车」只执行一次保存</b>，不会一次说出一串"回车"就存出好几条；正常一条一条说、间隔一两秒的连续录入不受影响。<b>点键盘上的「停止听写」也不会重复</b>：系统会认出"这是刚才那批文字的再次提交"，整批跳过；「清空」后新说的内容也不会把被清掉的旧内容一起存回来</p><p style="margin:4px 0;font-size:13px">• <b>连续语音输入</b>（新建记录弹窗底部的开关）：开着时，说「回车」保存后弹窗<b>不重建</b>，手机键盘不收起、语音听写不中断，可以一直说下去；关掉则按老方式（保存后重建弹窗，键盘会收起）</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>回车</b>：识别框按回车直接保存并继续录入下一条</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>长按行号</b>：插入行（上方空行）</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>长按记录</b>：进入多选模式，可批量删除或格式设置</p>'+
@@ -5059,7 +5059,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-11.3</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.1</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7434,11 +7434,62 @@ function hardClearInput(el){
   try{ el.value = ''; }catch(e){}
   try{ el.setSelectionRange(0, 0); }catch(e){}
   el._pendingClear = false; el._clearedSnapshot = null;
+  // ⚠️ 这里**不要**清掉"已处理片段"（clearSmartHandled）✗ ——
+  //    focusout（收起键盘）会在"停止听写的重播"之前跑，清掉就等于把守卫拆了。
+  //    重播窗口只有 6 秒，留着不会误伤正常使用；真正的新会话（重开弹窗）是新的 DOM 元素，天然干净。
   syncSmartMirror();
 }
 /* 去掉空白和标点，只留中英文数字 —— 用来判断"这段文字是不是同一批内容"（iOS 提交听写时
    常把空格、标点改掉，直接比对会误判成"被替换"） */
 function normSmartText(s){ return String(s == null ? '' : s).replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, ''); }
+/* ── 「停止听写时的整段重播」防御 ─────────────────────────────────────────
+   现象：说「回车」存了一条之后，**点键盘停止语音输入**时会再存一条；或者
+        "说内容 → 说清空 → 说新内容 → 说回车 → 停止听写"会存出两条（把被清空的旧内容也存回来）。
+   原因：iOS 停止听写时会把这一整段文字**重新提交一遍**（input 事件又带着刚才那批文字回来），
+        于是「回车」被二次执行、被清空的旧内容"复活"又被识别一次 ✗。
+   做法：把"已经处理过的内容片段"记在识别框上（`_handledFrags`），
+        再来一批文字时，把**指令词**（回车/清空）和**已处理片段**都剥掉：
+        剥完什么都不剩 → 说明整批都是"已经处理过的"→ 整批忽略 ✓。
+        只在每个指令之后的 6 秒窗口内生效（重播总是紧跟着发生），
+        过了窗口就恢复正常，避免"用户真的想再录一条一模一样的"被误杀。 */
+const REPLAY_WINDOW_MS = 6000;
+function smartNoteHandled(box, textBeforeClear){
+  if(!box) return;
+  const n = normSmartText(String(textBeforeClear || '').replace(/回车|清空/g, ''));
+  if(n) (box._handledFrags = box._handledFrags || []).push(n);
+  if(box._handledFrags && box._handledFrags.length > 12) box._handledFrags.shift();
+  box._handledRaw = box.value || '';                 // 记下"处理到哪儿了"，用来算新增部分
+  box._replayUntil = Date.now() + REPLAY_WINDOW_MS;
+}
+/* 这批文字是不是"已经处理过的那批"（重播）？ */
+function smartIsReplay(box){
+  if(!box || !box._replayUntil || Date.now() > box._replayUntil) return false;
+  const frags = box._handledFrags;
+  if(!frags || !frags.length) return false;
+  let rest = normSmartText(smartBoxText(box)).replace(/回车|清空/g, '');
+  if(!rest) return false;                            // 没实质内容 → 走正常流程（标点尾巴另有处理）
+  for(const f of frags){ if(f) rest = rest.split(f).join(''); }
+  return rest.length === 0;
+}
+/* 只取"上次处理之后新增的那部分"文字 —— 重播会把旧内容一起带回来，
+   识别时必须只用新增部分，否则旧内容会被再次解析并填进表单 ✗ */
+function smartPendingText(box){
+  const raw = box ? (box.value || '') : '';
+  const cons = box && box._handledRaw;
+  if(cons == null || !cons.length) return raw;
+  if(raw === cons) return '';
+  const i = raw.indexOf(cons);
+  if(i === 0) return raw.slice(cons.length);                       // 新内容接在后面（iOS 听写就是这样）
+  if(i > 0) return raw.slice(0, i) + raw.slice(i + cons.length);   // 插在前面/中间
+  // 对不上：可能是 iOS 把整段重写了一遍（空格标点变了）→ 归一化后还含旧内容就算"同一批"
+  const nC = normSmartText(cons), nR = normSmartText(raw);
+  if(nC && nR.indexOf(nC) >= 0) return '';
+  return raw;                                                      // 真的换了新内容
+}
+function clearSmartHandled(box){
+  if(!box) return;
+  box._handledFrags = null; box._handledRaw = null; box._replayUntil = 0;
+}
 /* 识别框里"真正算数"的文字（见上面 ① 的说明） */
 function smartBoxText(box){
   if(!box) return '';
@@ -8094,9 +8145,20 @@ function bindSmartInput(){
       syncSmartMirror();
       return;
     }
+    // ── 停止听写时的"整段重播"守卫 ─────────────────────────────────────
+    // 说「回车」保存后识别框被清空，但 iOS 在你停止听写时会把刚才那批文字重新提交一遍，
+    // 于是「回车」被二次执行 → 又存一条；"清空 → 新内容 → 回车"时还会把被清空的旧内容
+    // 一起带回来存成第二条 ✗。这里整批忽略（详见 smartIsReplay 的说明）。
+    if(smartIsReplay(box)){
+      vlog('识别框：这批文字是"已处理过的重播" → 整批忽略');
+      clearTimeout(box._t);
+      syncSmartMirror();
+      return;
+    }
     // 智能识别：出现"清空"二字 → 清空识别框（不再解析）
     if(smartHasClearCmd(box.value)){
       clearTimeout(box._t);
+      smartNoteHandled(box, smartBoxText(box));     // 记下"这批已处理"（要在清空之前取）
       box._clearAt = Date.now();
       clearInputKeepVoice(box);                     // 只全选、不写 value —— 写值会让 iOS 结束这次听写
       box._tailUntil = Date.now() + 1500;           // 之后 1.5 秒内的"纯标点尾巴"（如句号）自动清掉
@@ -8112,12 +8174,16 @@ function bindSmartInput(){
       const tid = form && form.dataset.table;
       // 顺序很重要：先把"回车"二字去掉、把要识别的文字记下来，**再**清空识别框。
       // 清空走 clearInputKeepVoice（按当前「清空方式」），尽量不打断听写。
-      const keep = smartBoxText(box).replace(/回车/g, '').trim();
+      // ⚠️ 用 smartPendingText 而不是 smartBoxText：重播会把旧内容一起带回来，
+      //    只取"上次处理之后新增的部分"去识别，否则旧内容会被再次填进表单 ✗
+      //    （不要加 "为空就退回 smartBoxText" 的兜底 —— 那正好会把旧内容又解析一遍 ✗）
+      const keep = smartPendingText(box).replace(/回车/g, '').trim();
       // ⚠️ 闸门必须在**任何副作用之前**过（它自己记"保存前"的指纹）——
       //    否则第二次进来时表单已被 runSmartFill 改过，指纹兜底就失效了 ✗
       const uid = box._uid || (box._uid = 'sb' + Math.random().toString(36).slice(2));
       if(!enterGate(tid, uid)) return;              // 短时间内的第二次「回车」→ 直接丢弃
       const beforeSig = form ? (form.dataset.baseSig || '') : '';
+      smartNoteHandled(box, smartBoxText(box));     // 记下"这批已处理"（要在清空之前取）
       clearInputKeepVoice(box);
       box._tailUntil = Date.now() + 1500;           // 保存后听写尾巴常会带一个句号过来，自动清掉
       box._clearAt = Date.now();
