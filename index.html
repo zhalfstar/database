@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-13.7</title>
+<title>轻量数据库 · v2026-10-13.8</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-13.7">v2026-10-13.7</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-13.8">v2026-10-13.8</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5130,7 +5130,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-13.7</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-13.8</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7750,6 +7750,37 @@ function smartRememberSavedText(tid, rawText){
   if(list.indexOf(n) < 0) list.push(n);
   while(list.length > 60) list.shift();                 // 一次会话最多记 60 条
 }
+/* 两段文字的**最长公共子串**长度（用来判"识别器重播的是修订前的文字"） */
+function lcsLen(a, b){
+  const m = a.length, n = b.length;
+  if(!m || !n) return 0;
+  let prev = new Array(n + 1).fill(0), best = 0;
+  for(let i = 1; i <= m; i++){
+    const cur = new Array(n + 1).fill(0);
+    for(let j = 1; j <= n; j++){
+      if(a[i-1] === b[j-1]){ cur[j] = prev[j-1] + 1; if(cur[j] > best) best = cur[j]; }
+    }
+    prev = cur;
+  }
+  return best;
+}
+/* 这段文字和"本会话已保存过的某条"有没有**长公共子串**（≥10 字）？
+   ⚠️ 为什么必须要这一条 ✗ —— 真机实证（v2026-10-13.7，11:32.680）：
+   识别器重播的往往是**修订前**的文字（`林玉斌教育的玉，三点水的斌…` 被修订成 `林育滨…`），
+   和最终保存下来的版本"不完全相同 / 不是后缀 / 不互相包含"—— 三种比对全对不上，
+   但**共享一大段**（`死符太岁13706003653`，11 字）→ 只有"长公共子串"能抓到 ✓
+   阈值 10：用户数据里"太岁名"只有 4 字，10 字以上的重合基本只可能是同一条记录 ✓ */
+function smartOverlapsSaved(tid, text){
+  if(!tid || _smartHandled.tableId !== tid) return false;
+  const n = normSmartText(String(text || '').replace(/回车|清空/g, ''));
+  if(!n || n.length < 10) return false;
+  const list = (_smartHandled.saved || []).slice(-12);
+  for(const s of list){
+    if(!s || s.length < 10) continue;
+    if(lcsLen(n, s) >= 10) return true;
+  }
+  return false;
+}
 /* 这段文字是不是"本会话里已经保存过的某一条"？
    ⚠️ 不能只比"完全相同" ✗ —— 真机实证：识别器会把旧记录**改写**后再重播
    （`五鬼太岁` → `岁破太岁`），用户看到的就是"最后一条与第一条**不完全一致**"。
@@ -8771,11 +8802,14 @@ function bindSmartInput(){
       //    一整块 12 字插回来）→ 它和"本会话已保存过的某一条"**完全相同** → 判定重播、跳过 ✗
       //    只对"整块插入"生效（`chunkIns`）：用户逐字说的（1~3 字）完全不受影响 ✓
       const resend = !!(keep0 && chunkIns && smartIsSavedText(tid, keep0));
-      const keep = (leftover || resend) ? '' : keep0;
+      // ⭐ 与"已保存过的某条"有长公共子串（≥10 字）→ 也是重播（识别器重播修订前的文字）✗
+      const resend2 = !!(keep0 && smartOverlapsSaved(tid, keep0));
+      const keep = (leftover || resend || resend2) ? '' : keep0;
       vlog('回车：原文=' + vlogText(box.value) + ' | 切到' + (takeBefore ? '回车前' : '回车后')
            + (bulkInsert ? '(整段重写)' : (chunkIns ? '(整块插入)' : ''))
            + ' | 待识别=' + vlogText(keep) + (leftover ? '（只剩残渣→当空）' : '')
            + (resend ? '（与已保存过的某条相同→当空）' : '')
+           + (resend2 ? '（与已保存过的某条长重合→当空）' : '')
            + ' | 已保存=' + (((_smartHandled && _smartHandled.saved) || []).length) + '条');
       // ⚠️ 闸门必须在**任何副作用之前**过（它自己记"保存前"的指纹）——
       //    否则第二次进来时表单已被 runSmartFill 改过，指纹兜底就失效了 ✗
