@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-12.9</title>
+<title>轻量数据库 · v2026-10-13.2</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-12.9">v2026-10-12.9</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-13.2">v2026-10-13.2</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5075,7 +5075,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-12.9</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-13.2</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7673,13 +7673,45 @@ function smartNoteHandled(box, textBeforeClear){
   const same = (_smartHandled.tableId === tid);
   const prev = same ? _smartHandled.frags.slice() : [];
   if(n) prev.push(n);
-  while(prev.length > 12) prev.shift();
+  // ⚠️ 容量必须够大（60），不能是 12 ✗ —— 真机实证：一次会话连录 15+ 条时，
+  //    **第 1 条**会被 12 条的容量挤出去 → 识别器把它改写后重播回来时，
+  //    `smartStripHandled` 的容错剥离对它无效 → 存出"第 1 条 = 最后 1 条" ✗
+  while(prev.length > 60) prev.shift();
   _smartHandled = {
     tableId:tid, frags:prev, raw:(box.value||''), uid:(box._uid||''),
     until: Date.now() + REPLAY_WINDOW_MS,
     enters: same ? (_smartHandled.enters || 0) : 0,        // ⚠️ 不能冲掉游标
-    tailSig: same ? (_smartHandled.tailSig || '') : ''
+    tailSig: same ? (_smartHandled.tailSig || '') : '',
+    saved: same ? (_smartHandled.saved || []) : []         // ⚠️ 也不能冲掉"已保存原文"清单
   };
+}
+/* 记下"本会话已保存过的原文"（归一化 + 去掉指令词）——
+   用来识别"识别器把**较早的某一条**重新提交"。只记最后一条会漏（真机：第 1 条被重播）✗ */
+function smartRememberSavedText(tid, rawText){
+  const n = normSmartText(String(rawText || '').replace(/回车|清空/g, ''));
+  if(!tid || !n) return;
+  if(_smartHandled.tableId !== tid) _smartHandled = { tableId:tid, frags:[], raw:'', uid:'', until:0, saved:[] };
+  const list = _smartHandled.saved || (_smartHandled.saved = []);
+  if(list.indexOf(n) < 0) list.push(n);
+  while(list.length > 60) list.shift();                 // 一次会话最多记 60 条
+}
+/* 这段文字是不是"本会话里已经保存过的某一条"？
+   ⚠️ 不能只比"完全相同" ✗ —— 真机实证：识别器会把旧记录**改写**后再重播
+   （`五鬼太岁` → `岁破太岁`），用户看到的就是"最后一条与第一条**不完全一致**"。
+   所以先比完全相同，再按**编辑距离**宽松比一次。
+   安全前提：只在"整块插入"（chunkIns）时才调用 → 用户**逐字说的**永远不受影响 ✓ */
+function smartIsSavedText(tid, text){
+  if(!tid || _smartHandled.tableId !== tid) return false;
+  const n = normSmartText(String(text || '').replace(/回车|清空/g, ''));
+  if(!n) return false;
+  const list = _smartHandled.saved || [];
+  if(list.indexOf(n) >= 0) return true;                 // 完全相同
+  if(n.length < 6) return false;                        // 太短容易误判（且短内容不会"整块插入"）
+  for(const s of list){
+    if(!s || Math.abs(s.length - n.length) > 3) continue;
+    if(smartTextSimilar(n, s)) return true;             // 改写过的版本（编辑距离 ≤1/3）
+  }
+  return false;
 }
 /* 在**归一化**文本里剥掉已处理的片段，允许"近似"命中 ——
    iOS 停止听写重播时会把字重认一遍（常只差一两个字），只按完全相等剥会漏 ✗。
@@ -7838,13 +7870,23 @@ function smartConsumeSegment(seg){
    为什么需要：一次语音会话里连录几条后，iOS 停止听写会把**整段（好几条）**重新提交，
    识别框里就出现"之前几条的内容"。只剔最后一条（_handledRaw）是不够的 ✗。
    片段是归一化过的（没空格标点），所以按"字符之间允许隔最多 2 个分隔符"来匹配。 */
+/* ⚠️ 只能从**开头**剥，绝不能全文剥 ✗ ——
+   真机实证（v2026-10-12.9，11:20.990）：之前存过一条含「无鬼太岁」的记录后，
+   新记录 `魏兰芝，无鬼太岁，回车。` 里的**中间那截**「无鬼太岁」被当成旧片段吃掉 →
+   `待识别=len=6 "魏兰芝， ，"` → **存出一条残缺记录**（事项为空）✗
+   而"重播"时漏进来的旧文字**总是在最前面**（识别器是把整段重新提交），所以只剥前缀足够 ✓ */
 function smartStripHandled(text){
   const frags = ((_smartHandled && _smartHandled.frags) || []).slice().sort((a,b)=>b.length-a.length);
   let out = String(text == null ? '' : text);
-  for(const f of frags){
-    if(!f || f.length < 2) continue;
-    const pat = f.split('').map(ch=>ch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('[\\s\\S]{0,2}?');
-    try{ out = out.replace(new RegExp(pat,'g'), ' '); }catch(e){}
+  let again = true, guard = 0;
+  while(again && guard++ < 20){
+    again = false;
+    for(const f of frags){
+      if(!f || f.length < 2) continue;
+      const pat = f.split('').map(ch=>ch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('[\\s\\S]{0,2}?');
+      let re; try{ re = new RegExp('^' + pat); }catch(e){ continue; }
+      if(re.test(out)){ out = out.replace(re, ' '); again = true; break; }
+    }
   }
   return out;
 }
@@ -8620,7 +8662,16 @@ function bindSmartInput(){
       const rawNow = box.value || '';
       const enterParts = rawNow.split(/回车/);
       const endsWithEnter = /回车[\s。.，,、]*$/.test(rawNow);
-      const bulkInsert = (box._lastInsLen || 0) >= 20;      // 20 字以上 = 识别器整段重写
+      // ⚠️ 这里用**两个**阈值，别合成一个 ✗：
+      //   `bulkInsert`(≥20) —— 判断"整段重写"（用来决定取「回车」前还是后那段）
+      //   `chunkIns`(≥8)    —— 判断"这一块是**一次插进来**的"（识别器重写/重播的特征）
+      //   为什么必须有 chunkIns：真机日志实证，识别器把**较早的某一条**重新提交时可能只有
+      //   **12 字**（`彭年春：五鬼太岁，回车。`）—— 若拿 20 判，会把它当成"用户逐字说的"，
+      //   于是又存一遍（真机：**第 1 条 和 最后 1 条 重复** ✗）。
+      //   而用户说话在所有真机日志里都是 **1~3 字/次**（`data=len=1 "车"`），8 足够安全 ✓
+      const insLen = (box._lastInsLen || 0);
+      const bulkInsert = insLen >= 20;      // 整段重写（几十上百字一块）
+      const chunkIns   = insLen >= 8;       // 一整块插进来（不是逐字说的）
       const takeBefore = endsWithEnter && !bulkInsert;      // 只有"用户逐字说的"才取回车**前**那段
       let segNow = takeBefore ? enterParts[enterParts.length - 2] : enterParts[enterParts.length - 1];
       if(segNow == null) segNow = '';
@@ -8631,11 +8682,16 @@ function bindSmartInput(){
       const meaningful = keep0.replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, '');
       const rawLen = String(box.value || '').replace(/\s/g, '').length;
       const leftover = meaningful.length < 3 && rawLen > meaningful.length * 4;
-      const keep = leftover ? '' : keep0;
+      // ⭐ 识别器会把**本会话里较早的某一条**原样重新提交（真机：第 1 条 `彭年春…` 被当成
+      //    一整块 12 字插回来）→ 它和"本会话已保存过的某一条"**完全相同** → 判定重播、跳过 ✗
+      //    只对"整块插入"生效（`chunkIns`）：用户逐字说的（1~3 字）完全不受影响 ✓
+      const resend = !!(keep0 && chunkIns && smartIsSavedText(tid, keep0));
+      const keep = (leftover || resend) ? '' : keep0;
       vlog('回车：原文=' + vlogText(box.value) + ' | 切到' + (takeBefore ? '回车前' : '回车后')
-           + (bulkInsert ? '(整段重写)' : '')
+           + (bulkInsert ? '(整段重写)' : (chunkIns ? '(整块插入)' : ''))
            + ' | 待识别=' + vlogText(keep) + (leftover ? '（只剩残渣→当空）' : '')
-           + ' | 已保存片段=' + (((_smartHandled && _smartHandled.frags) || []).length) + '条');
+           + (resend ? '（与已保存过的某条相同→当空）' : '')
+           + ' | 已保存=' + (((_smartHandled && _smartHandled.saved) || []).length) + '条');
       // ⚠️ 闸门必须在**任何副作用之前**过（它自己记"保存前"的指纹）——
       //    否则第二次进来时表单已被 runSmartFill 改过，指纹兜底就失效了 ✗
       const uid = box._uid || (box._uid = 'sb' + Math.random().toString(36).slice(2));
@@ -8675,6 +8731,7 @@ function bindSmartInput(){
           if(saved === true){
             enterGateDone(tid, uid);
             smartRememberSaved(tid, sigNow);
+            smartRememberSavedText(tid, rawBefore);   // 记下本会话已保存过的原文（防"较早某条被重播"）
             // ⭐ 关键：保存成功后立刻给识别框挂"隐藏罩" —— 停止听写时 iOS 会把刚保存的这段
             //    重新提交一遍，不盖住的话它会被自动识别**重新填进表单**、下一次又存一遍 ✗
             smartArmSavedEcho(tid, rawBefore);
