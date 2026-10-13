@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-13.4</title>
+<title>轻量数据库 · v2026-10-13.5</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-13.4">v2026-10-13.4</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-13.5">v2026-10-13.5</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5130,7 +5130,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-13.4</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-13.5</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -7974,14 +7974,34 @@ function smartBoxText(box){
   //    又会被当成新内容去识别、重新填表、再存一遍 ✗
   if(!raw) return '';
   if(raw === snap) return '';                       // 还是旧文字：当作空
+  const nSnap0 = normSmartText(snap);
   const i = raw.indexOf(snap);
-  if(i === 0) return raw.slice(snap.length);        // 新文字接在旧文字后面（iOS 听写就是这种）
+  if(i === 0){
+    const tail = raw.slice(snap.length);            // 接在旧文字后面的部分
+    const nTail = normSmartText(tail);
+    // ⚠️ 但这段"新增部分"如果**正好是刚保存那段的尾巴** → 那是重播，不是新内容 ✗
+    //    真机实证（v2026-10-13.4，23:47.180 / hide 清空方式）：保存后 0.85 秒，识别器把
+    //    `陈家炳，回车。`（刚保存那段的尾巴）接在后面插回来 → 被当成新记录又存一条 ✗
+    if(nTail && nTail.length >= 3 && nSnap0.length > nTail.length && nSnap0.slice(-nTail.length) === nTail){
+      vlog('识别框：新增部分其实是刚保存那段的尾巴 → 继续隐藏（重播）');
+      return '';
+    }
+    return tail;                                    // 新文字接在旧文字后面（iOS 听写就是这种）
+  }
   if(i > 0) return raw.slice(0, i) + raw.slice(i + snap.length);   // 插在前面/中间
   // 对不上时要分两种情况（以前一律当成"旧文字被替换"，于是旧文字会显形 ✗）：
   //   a) iOS 停止/提交听写时把整段**重写**了一遍（空格、标点变了）→ 旧文字其实还在里面 → 继续隐藏 ✓
   //   b) 旧文字真的被整段**替换**成了新内容 → 那就该认新内容 ✓
   // 判据：去掉空白和标点后，raw 里还含不含 snap（对空格/标点变化不敏感）。
   const nSnap = normSmartText(snap), nRaw = normSmartText(raw);
+  // ⚠️ **反向包含**：进来的文字是"刚保存那段"的**尾巴** → 也是重播 ✗
+  //    真机实证（v2026-10-13.4，23:47.180）：保存「…姓名，陈家炳。回车」后 0.85 秒，
+  //    识别器只把尾巴 `陈家炳，回车。` 插回来 → 被当成新记录存了一条**又残缺又重复**的 ✗
+  //    （原来只判"进来的文字里含快照"和"编辑距离"，都抓不到这种"只回一小截"的情形）
+  if(nSnap && nRaw && nRaw.length >= 3 && nSnap.length > nRaw.length && nSnap.slice(-nRaw.length) === nRaw){
+    vlog('识别框：是刚保存那段的**尾巴** → 继续隐藏（重播）');
+    return '';
+  }
   if(nSnap && nRaw.indexOf(nSnap) >= 0){
     box._clearedSnapshot = raw;          // 快照跟着更新成"被重写后的旧文字"，后续追加仍能识别 ✓
     vlog('识别框：内容被重写，继续隐藏（' + raw.length + ' 字）');
@@ -8667,7 +8687,14 @@ function bindSmartInput(){
       return;
     }
     // 智能识别：含"回车"二字时去掉它并直接保存，方便连续录入
-    if(/回车/.test(smartBoxText(box))){
+    // ⚠️ 必须**以「回车」结尾**才算"说了回车"，不能只判"含回车" ✗ ——
+    //    真机实证（v2026-10-13.4，19:20.951）：识别器把整段重写时，会把**上一条**的「回车」
+    //    夹在中间插进来（`，回车。郑剑龙，散门太岁。`）→ 旧逻辑只要文字里含"回车"就保存，
+    //    于是把用户**正在说、还没说完**的「郑剑龙」当成一条记录存了 ✗
+    //    （用户原话："没有说回车，自己保存了一条"）
+    //    而用户真说「回车」时，它一定在**末尾**（说完就停，后面不会有别的字）✓
+    const _endsEnter = /回车[\s。.，,、！!？?；;：:]*$/.test(box.value || '');
+    if(_endsEnter && /回车/.test(smartBoxText(box))){
       // ── 停止听写时的"整段重播"守卫 ─────────────────────────────────────
       // 说「回车」保存后识别框被清空，但 iOS 在你停止听写时会把刚才那批文字重新提交一遍，
       // 于是「回车」被二次执行 → 又存一条；"清空 → 新内容 → 回车"时还会把被清空的旧内容
@@ -8726,7 +8753,10 @@ function bindSmartInput(){
       //   而用户说话在所有真机日志里都是 **1~3 字/次**（`data=len=1 "车"`），8 足够安全 ✓
       const insLen = (box._lastInsLen || 0);
       const bulkInsert = insLen >= 20;      // 整段重写（几十上百字一块）
-      const chunkIns   = insLen >= 8;       // 一整块插进来（不是逐字说的）
+      const chunkIns   = insLen >= 5;       // 一整块插进来（不是逐字说的）
+      //    ⚠️ 5 而不是 8 ✗ —— 真机实证（23:47.180）：识别器只重播**尾巴**时可能只有 **7 字**
+      //    （`陈家炳，回车。`），阈值 8 会漏掉它 → 存出一条**又残缺又重复**的记录 ✗
+      //    用户逐字说话是 1~3 字/次，5 足够安全 ✓
       const takeBefore = endsWithEnter && !bulkInsert;      // 只有"用户逐字说的"才取回车**前**那段
       let segNow = takeBefore ? enterParts[enterParts.length - 2] : enterParts[enterParts.length - 1];
       if(segNow == null) segNow = '';
