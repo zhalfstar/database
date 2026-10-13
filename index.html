@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-13.5</title>
+<title>轻量数据库 · v2026-10-13.7</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-13.5">v2026-10-13.5</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-13.7">v2026-10-13.7</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -5130,7 +5130,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-13.5</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-13.7</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
@@ -8820,6 +8820,13 @@ function bindSmartInput(){
             // ⭐ 关键：保存成功后立刻给识别框挂"隐藏罩" —— 停止听写时 iOS 会把刚保存的这段
             //    重新提交一遍，不盖住的话它会被自动识别**重新填进表单**、下一次又存一遍 ✗
             smartArmSavedEcho(tid, rawBefore);
+            // ⭐ 把"这次实际写进去的字段值"记进日志 —— 用户报"存出一条空记录"时，
+            //    光看"待识别=…"猜不出到底哪几个字段有值，这一行能直接给出答案 ✓
+            try{
+              const _t = db.tables.find(x=>x.id===tid);
+              const _row = _t && _t.rows[_t.rows.length-1];
+              if(_row) vlog('已保存记录：' + vlogText(JSON.stringify(_row.values || {})));
+            }catch(e){}
           }
           else enterGateClear();
         }, 200);
@@ -9019,6 +9026,23 @@ function saveRecord(tableId, rowId){
       values[f.id] = v;
     }else{
       values[f.id] = v;
+    }
+  }
+  // ⭐ 全空的新记录不保存 ✗ ——
+  //    实体回车键那条路径（`box.addEventListener('keydown')`）**完全没有"有没有内容"的判断**，
+  //    表单是空的时候照样 `saveRecord()` → 存出一条**完全没有信息**的记录 ✗
+  //    （用户报："最后一条是自动填进去的空记录"）
+  //    放在 saveRecord 里做 → 语音回车 / 实体回车 / 表单提交**所有路径一次性覆盖** ✓
+  //    注：只拦"新建"（编辑时允许把字段清空后保存）；有默认值的字段（如"默认当前时间"）
+  //    不算空，所以带默认值的表行为不变 ✓
+  if(!rowId){
+    const _blankVal = v => v == null
+      || (typeof v === 'string' && (v.trim() === '' || v === 'false'))   // 空串 / 未勾选的 bool
+      || (Array.isArray(v) && v.length === 0);                           // 空的选项/标签
+    if(Object.keys(values).every(k => _blankVal(values[k]))){
+      vlog && vlog('saveRecord：所有字段都是空的 → 不保存（避免存出空记录）');
+      toast('没有内容可保存');
+      return _bail();
     }
   }
   if(rowId){
