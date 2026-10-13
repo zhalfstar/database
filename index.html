@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-13.2</title>
+<title>轻量数据库 · v2026-10-13.3</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-13.2">v2026-10-13.2</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-13.3">v2026-10-13.3</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -4013,7 +4013,7 @@ function viewDiagSnapshot(){
 function openViewDiag(){
   const rows = Object.entries(viewDiagSnapshot())
     .map(([k,v])=>`<div class="diag-row"><span class="diag-k">${esc(k)}</span><span class="diag-v">${esc(String(v))}</span></div>`).join('');
-  const logLines = (window._voiceLog || []).slice(-40);
+  const logLines = (window._voiceLog || []).slice(-100);
   const logRows = logLines.length
     ? logLines.map(x=>`<div class="diag-row"><span class="diag-v">${esc(x)}</span></div>`).join('')
     : '<div class="diag-row"><span class="muted">（还没有记录）</span></div>';
@@ -4022,10 +4022,11 @@ function openViewDiag(){
     <div class="modal-body">
       <p class="muted" style="font-size:12px;margin:0 0 6px">如果表格显示不正常（比如表头被顶走），先点下面的「复位视图」。<br>还不行就把这一屏截图发我 —— 这些数字能告诉我真机上到底发生了什么。</p>
       <div class="diag-list">${rows}</div>
-      <p class="muted" style="font-size:12px;margin:12px 0 6px">语音/焦点日志（最近 14 条）—— 语音突然停时，把这一屏一起截图给我</p>
+      <p class="muted" style="font-size:12px;margin:12px 0 6px">语音/焦点日志（最近 100 条）—— 出问题时点下面的「查看/复制日志」，把文字发我</p>
       <div class="diag-list">${logRows}</div>
     </div>
     <div class="modal-foot">
+      <button type="button" class="btn ghost" onclick="showDiagText()">查看/复制日志</button>
       <button type="button" class="btn ghost" onclick="copyViewDiag(this)">复制信息</button>
       <button type="button" class="btn primary" onclick="resetViewNow()">复位视图</button>
     </div>
@@ -4049,13 +4050,65 @@ function resetViewNow(){
   closeModal();
   toast('视图已复位');
 }
-function copyViewDiag(btn){
-  const txt = Object.entries(viewDiagSnapshot()).map(([k,v])=>k+': '+v).join('\n')
+function diagTextAll(){
+  return Object.entries(viewDiagSnapshot()).map(([k,v])=>k+': '+v).join('\n')
     + '\n--- 语音/焦点日志（最近 150 条）---\n' + ((window._voiceLog || []).slice(-150).join('\n') || '（空）');
+}
+/* 复制文本：两条路都试。
+   ⚠️ 不能只用 `navigator.clipboard` ✗ —— 它在**非 https**（http / file://）下**不存在**，
+   用户点"复制信息"会直接失败（真机反馈："日志的内容怎么不能复制"）。
+   先试老的 `execCommand('copy')`（http 下也能用、且是同步的、能立刻知道成败），再试新 API。 */
+function tryCopyText(txt){
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.setAttribute('readonly','');
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ ta.setSelectionRange(0, txt.length); }catch(e){}
+    const okc = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if(okc) return true;
+  }catch(e){}
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).catch(()=>{});
+      return true;                       // 只能乐观返回（Promise 无法同步取结果）
+    }
+  }catch(e){}
+  return false;
+}
+/* 把日志放进**可选中**的文本框 —— 这是 iOS 上最可靠的出口：
+   长按 → 全选 → 拷贝。即使自动复制不行，用户也一定能拿到内容 ✓ */
+function showDiagText(){
+  const txt = diagTextAll();
+  openModal(`<div class="modal" style="width:min(760px,94vw)">
+    <div class="modal-head"><h2>诊断信息（可选中复制）</h2><button type="button" class="icon-btn" onclick="closeModal()" title="关闭">${svg('i-x')}</button></div>
+    <div class="modal-body">
+      <p class="muted" style="font-size:12px;margin:0 0 8px">长按下面文字 → <b>全选</b> → <b>拷贝</b> 发我即可（自动复制不一定能用，这条路一定行）。</p>
+      <textarea id="diag-text" readonly onclick="this.select()" onfocus="this.select()"
+        style="width:100%;height:46vh;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow:auto;-webkit-user-select:text;user-select:text">${esc(txt)}</textarea>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" onclick="copyFromDiag(this)">自动复制</button>
+      <button type="button" class="btn primary" onclick="closeModal()">关闭</button>
+    </div>
+  </div>`);
+  const ta = document.getElementById('diag-text');
+  if(ta){ try{ ta.focus(); ta.select(); }catch(e){} }
+}
+function copyFromDiag(btn){
+  const ta = document.getElementById('diag-text');
+  const txt = ta ? ta.value : diagTextAll();
+  if(tryCopyText(txt)){ if(btn) btn.textContent = '已复制'; toast('已复制'); }
+  else toast('自动复制不可用，请长按文字 → 全选 → 拷贝');
+}
+function copyViewDiag(btn){
+  const txt = diagTextAll();
   const done = ()=>{ if(btn) btn.textContent = '已复制'; };
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(done).catch(()=>{ toast('复制失败，请直接截图'); });
-  }else{ toast('复制失败，请直接截图'); }
+  if(tryCopyText(txt)){ done(); }
+  else { showDiagText(); }               // 复制不了就直接把文字摊开让用户自己选
 }
 function openPreview(tableId){
   const t = db.tables.find(x=>x.id===tableId); if(!t) return;
@@ -5075,7 +5128,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-13.2</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-13.3</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
