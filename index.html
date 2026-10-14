@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" id="theme-color-meta" content="#F5F6F8">
-<title>轻量数据库 · v2026-10-13.9</title>
+<title>轻量数据库 · v2026-10-14.1</title>
 <!-- iOS「添加到主屏幕」后按 App 方式打开：全屏、没有 Safari 地址栏。
      图标必须用 PNG（iOS 不认 SVG，也不认 data: 的 SVG），这里内嵌成 base64 保持单文件。 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -277,8 +277,8 @@ body.table-page-body{overflow:hidden}
 }
 .bar-menu-wrap{position:relative}
 .bar-menu{position:absolute;right:0;bottom:calc(100% + 6px);background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 30px rgba(15,23,42,.12);padding:6px;display:flex;flex-direction:column;min-width:178px;z-index:40;animation:menuPop .2s ease}
-.bar-menu button{display:flex;align-items:center;gap:8px;background:none;border:none;padding:9px 12px;font-size:13px;color:var(--text);cursor:pointer;border-radius:8px;text-align:left;font-family:inherit;white-space:nowrap}
-.bar-menu button:hover{background:var(--panel2)}
+.bar-menu button,.bar-menu a{display:flex;align-items:center;gap:8px;background:none;border:none;padding:9px 12px;font-size:13px;color:var(--text);cursor:pointer;border-radius:8px;text-align:left;font-family:inherit;white-space:nowrap;text-decoration:none}
+.bar-menu button:hover,.bar-menu a:hover{background:var(--panel2)}
 table.grid{width:100%;border-collapse:collapse;table-layout:auto}
 table.grid.fixed{table-layout:fixed;width:auto}
 table.grid.fixed td{overflow:hidden;text-overflow:ellipsis}
@@ -919,7 +919,7 @@ html,body{overscroll-behavior-y:none}
 <aside id="sidebar">
   <div class="side-brand">
     <span class="brand-mark"><svg class="ic big" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg></span>
-    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-13.9">v2026-10-13.9</span></div></div>
+    <div><div class="brand-name">轻量数据库</div><div class="brand-sub">Local DB <span class="ver-badge" id="ver-badge" title="本文件版本：2026-10-14.1">v2026-10-14.1</span></div></div>
     <button class="icon-btn close-side" onclick="toggleSide(false)" title="关闭菜单" aria-label="关闭菜单"><svg class="ic" aria-hidden="true"><use href="#i-x" xlink:href="#i-x"/></svg></button>
   </div>
   <nav><a class="nav-item" href="#/overview" id="nav-overview"><svg class="ic" aria-hidden="true"><use href="#i-db" xlink:href="#i-db"/></svg>概览</a>
@@ -3543,6 +3543,11 @@ function renderTable(t){
       </div></div>`
   };
   const barHtml = orderKeys('lighter-db-menu-order', ['undo','manage','newSheet','condRules','groupStats','clearMode','viewDiag','preview','ioSub'], barItems);
+  // iPhone「添加到主屏幕」独立窗口模式：额外给一个跳出到 Safari 的出口（原因见 isStandaloneApp 的注释）。
+  // 只在独立模式下出现 —— 以后若改成 Safari 打开，它会自动消失，不留垃圾 ✓
+  const safariItem = isStandaloneApp()
+    ? '<a href="' + escAttr(location.href) + '" target="_blank" rel="noopener" title="独立窗口模式下，键盘上第三方输入法（讯飞/搜狗）的语音按钮会让它自己的 App 黑屏，这是 iOS 的限制；在 Safari 里录语音就正常" onclick="closeMenu(\'bar-menu\')">' + svg('i-info') + ' 用 Safari 打开</a>'
+    : '';
   const oldGrid = $('view').querySelector('#grid');
   const oldSc = oldGrid ? oldGrid.querySelector('.table-scroll') : null;
   pendingScroll = (oldSc && oldGrid.dataset.tableId === t.id) ? {top: oldSc.scrollTop, left: oldSc.scrollLeft} : null;
@@ -3559,7 +3564,7 @@ function renderTable(t){
        <div class="bar-menu-wrap">
          <button class="btn ghost sm" onclick="toggleMenu(event,'bar-menu')">${svg('i-more')} 更多</button>
          <div class="bar-menu" id="bar-menu" style="display:none">
-           ${barHtml}
+           ${barHtml}${safariItem}
          </div>
        </div>
        <div class="bar-menu-wrap">
@@ -5057,6 +5062,22 @@ function saveHistory(label, prevState){
     if(!saved){ try{ localStorage.removeItem(LS_KEY+'-history'); }catch(e){} }
   }catch(e){}
 }
+/* ===== iPhone「添加到主屏幕」独立窗口模式（standalone）=====
+   ⚠️ 这个模式下，**键盘上第三方输入法的语音按钮**（讯飞/搜狗/百度）会去启动它自己的 App
+   做识别。独立窗口的网页 App 没有 Safari 那套完整的 App 生命周期，对方 App 起不来就**黑屏**；
+   切回来后输入会话已经断了，连地球键切换输入法都没反应。**这是 iOS 的限制，页面侧修不了** ✗。
+   实测（2026-10-14，用户 iPhone）：同一个网址在 Safari 里一切正常；系统键盘的「听写」在
+   独立窗口里也正常。所以这里只做两件事：① 操作指南里写清楚；② 给一个「用 Safari 打开」的出口。
+   （如果以后改成 Safari 打开，isStandaloneApp() 返回 false，这个入口会自动消失 ✓） */
+function isStandaloneApp(){
+  try{
+    if(window.navigator && window.navigator.standalone === true) return true;   // iOS 主屏幕图标
+    // 非 iOS 不看 display-mode：桌面浏览器全屏、安卓 PWA 都不需要这条提示
+    if(!/iPhone|iPad|iPod/i.test(navigator.userAgent)) return false;
+    if(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
+  }catch(e){}
+  return false;
+}
 function openHelp(){
   const html = '<div class="modal">'+
     '<div class="modal-head"><h2>操作指南</h2><button type="button" class="icon-btn" onclick="closeModal()">'+svg('i-x')+'</button></div>'+
@@ -5090,6 +5111,10 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>回车</b>：识别框按回车直接保存并继续录入下一条</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>长按行号</b>：插入行（上方空行）</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>长按记录</b>：进入多选模式，可批量删除或格式设置</p>'+
+    '<h3 style="margin:16px 0 8px">iPhone 语音输入（重要）</h3>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>推荐用系统键盘的麦克风（听写）</b>：把输入法切到 iPhone 自带键盘，点键盘右下角的麦克风说内容 —— 识别稳、不会出问题</p>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>从主屏幕图标打开时，别用讯飞/搜狗键盘上的语音按钮</b>：那个按钮会去启动输入法自己的 App，而「独立窗口」模式下对方 App 起不来（黑屏），切回来后连地球键换输入法也会失灵。这是 iOS 的限制，不是软件的问题（同一个网址用 Safari 打开就正常）。<b>万一遇到了：按 Home 键回主屏幕、重新点图标即可恢复</b>，数据不会丢</p>'+
+    '<p style="margin:4px 0;font-size:13px">• <b>非要用讯飞语音</b>：表内「更多 → 用 Safari 打开」，在浏览器里录（浏览器里讯飞语音正常）</p>'+
     '<h3 style="margin:16px 0 8px">记录关联</h3>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字分组</b>：数字列中数值相同的记录会自动成组，点击组可查看成员、移除成员或解散整组——适合对账、查重</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>跨表关联</b>：长按某条记录 →「关联到其他记录」，可把不同表里的记录互相挂接、查看和解绑</p>'+
@@ -5130,7 +5155,7 @@ function openHelp(){
     '<p style="margin:4px 0;font-size:13px">• <b>日期</b>：输入"二月十六"或"2月16日"自动填日期</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>数字</b>：优先取"字段名+数字"（如"价格50"），最后一次为准</p>'+
     '<p style="margin:4px 0;font-size:13px">• <b>备注</b>：取"备注"后面的内容，到下一个字段名或分隔符为止</p>'+
-    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-13.9</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
+    '<p style="margin:14px 0 0;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px">当前版本：<b id="help-ver">v2026-10-14.1</b>　（每次更新都会改这个号，方便对照自己用的是哪一版）</p>'+
     '</div>'+
     '<div class="modal-foot"><button class="btn primary eq" onclick="closeModal()">知道了</button></div>'+
     '</div>';
